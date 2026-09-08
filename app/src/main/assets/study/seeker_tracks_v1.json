@@ -2,11 +2,16 @@
   {
     "track_id": "FULL_EVIDENCE",
     "title": "Full Clear-Evidence Path",
-    "description": "Structured, direct path presenting the pure words with full evidence framing."
+    "description": "A deep dive into the purity, providence, and preservation of the 1611 Authorized Version, providing a structured, direct path with full evidence framing for the seeker of truth."
   },
   {
     "track_id": "GENTLER_START",
     "title": "Gentler Starting Path",
-    "description": "A respectful starting path for seekers who need a lighter introduction."
+    "description": "A respectful, incremental introduction to the 1611 text, focusing on beauty and historical significance for seekers who need a lighter start before deep immersion."
+  },
+  {
+    "track_id": "HISTORICAL_CONTEXT",
+    "title": "Historical Context Path",
+    "description": "Explores the 1611 translation within its original Jacobean landscape, looking at the culture, the scholars, and the strict rules that shaped the Holy Word."
   }
 ]

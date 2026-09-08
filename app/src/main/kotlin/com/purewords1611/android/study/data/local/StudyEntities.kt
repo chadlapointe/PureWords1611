@@ -21,7 +21,9 @@ data class VerseEntity(
     val canonicalOrder: Int,
     val originalText: String,
     val modernizedText: String,
+    val standardText: String? = null,
     val comparativeText: String?,
+    val strongsText: String? = null,
     val hasItalicWords: Boolean,
     val sourceId: String,
     val sourceLocator: String,
@@ -71,7 +73,8 @@ data class PersonalNoteEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val verseId: Long,
     val note: String,
-    val updatedAtEpochMillis: Long
+    val updatedAtEpochMillis: Long,
+    val category: String? = null, // e.g. "Historical", "Theological", "Personal"
 )
 
 @Entity(
@@ -100,12 +103,80 @@ data class ReadingPreferenceEntity(
     @PrimaryKey val id: Int = 1,
     val explanationLevel: String,
     val contentVersion: Int = 0,
+    val lastBook: String? = null,
+    val lastChapter: Int? = null,
+    val lastVerseId: Long? = null,
+    val speechRate: Float = 1.0f,
+    val selectedVoice: String? = null,
+)
+
+@Entity(
+    tableName = "chapter_completions",
+    indices = [Index(value = ["book", "chapter"], unique = true)]
+)
+data class ChapterCompletionEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val book: String,
+    val chapter: Int,
+    val completedAtEpochMillis: Long,
+    val lastQuestionAskedAtEpochMillis: Long? = null,
+    val masteryPoints: Int = 0,
 )
 
 @Fts4(contentEntity = VerseEntity::class)
 @Entity(tableName = "verses_fts")
 data class VerseFtsEntity(
+    val book: String,
     val originalText: String,
     val modernizedText: String,
-    val comparativeText: String?
+    val standardText: String?,
+    val comparativeText: String?,
+    val strongsText: String?
+)
+
+@Entity(tableName = "front_matter")
+data class FrontMatterEntity(
+    @PrimaryKey val docId: String,
+    val title: String,
+    val textOriginal: String,
+    val textModernizedSpelling: String,
+    val sourceId: String,
+    val checksumSha256: String
+)
+
+@Entity(
+    tableName = "chapter_summaries",
+    indices = [Index(value = ["book", "chapter"], unique = true)]
+)
+data class ChapterSummaryEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val book: String,
+    val chapter: Int,
+    val summary1611: String?,
+    val titleEsv: String?,
+    val titleStandard: String? = null,
+    val sectionTitle: String? = null
+)
+
+@Entity(
+    tableName = "verse_titles",
+    indices = [Index(value = ["book", "chapter", "verse", "translation"], unique = true)]
+)
+data class VerseTitleEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val book: String,
+    val chapter: Int,
+    val verse: Int,
+    val title: String,
+    val translation: String // "ESV", "KJV_STANDARD", etc.
+)
+
+@Entity(tableName = "lexicon")
+data class LexiconEntity(
+    @PrimaryKey val strongsId: String, // e.g., "G1234", "H5678"
+    val word: String,
+    val transliteration: String?,
+    val pronunciation: String?,
+    val definition: String,
+    val info: String?
 )

@@ -16,8 +16,15 @@ import com.purewords1611.android.study.data.TestamentSection
         ExplanationEntity::class,
         ReadingPreferenceEntity::class,
         VerseFtsEntity::class,
+        FrontMatterEntity::class,
+        ChapterCompletionEntity::class,
+        ChapterSummaryEntity::class,
+        VerseTitleEntity::class,
+        LexiconEntity::class,
+        StudyStatsEntity::class,
+        MarginaliaEntity::class,
     ],
-    version = 13,
+    version = 50,
     exportSchema = false,
 )
 @TypeConverters(StudyTypeConverters::class)
@@ -29,6 +36,13 @@ abstract class StudyDatabase : RoomDatabase() {
     abstract fun personalNoteDao(): PersonalNoteDao
     abstract fun explanationDao(): ExplanationDao
     abstract fun readingPreferenceDao(): ReadingPreferenceDao
+    abstract fun frontMatterDao(): FrontMatterDao
+    abstract fun chapterCompletionDao(): ChapterCompletionDao
+    abstract fun chapterSummaryDao(): ChapterSummaryDao
+    abstract fun verseTitleDao(): VerseTitleDao
+    abstract fun lexiconDao(): LexiconDao
+    abstract fun studyStatsDao(): StudyStatsDao
+    abstract fun marginaliaDao(): MarginaliaDao
 }
 
 object StudyTypeConverters {

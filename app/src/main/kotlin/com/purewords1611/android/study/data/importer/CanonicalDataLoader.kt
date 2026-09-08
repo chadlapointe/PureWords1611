@@ -55,6 +55,7 @@ class CanonicalDataLoader @Inject constructor(
                             canonicalOrder = item.getInt("canonical_order"),
                             originalText = item.getString("text_original_1611"),
                             modernizedText = item.getString("text_modernized_spelling"),
+                            standardText = if (item.has("text_standard_kjv")) item.getString("text_standard_kjv") else item.getString("text_modernized_spelling"),
                             comparativeText = if (item.has("text_comparative_esv")) item.getString("text_comparative_esv") else null,
                             hasItalicWords = item.optBoolean("has_italicized_words", false),
                             sourceId = item.optString("source_id", "structure-placeholder"),

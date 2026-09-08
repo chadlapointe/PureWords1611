@@ -1,0 +1,58 @@
+[
+  {
+    "book": "Genesis",
+    "section_title": "THE FIRST BOOKE OF MOSES, called GENESIS"
+  },
+  {
+    "book": "Exodus",
+    "section_title": "THE SECOND BOOKE OF MOSES, called EXODVS"
+  },
+  {
+    "book": "Leviticus",
+    "section_title": "THE THIRD BOOKE OF MOSES, called LEVITICVS"
+  },
+  {
+    "book": "Numbers",
+    "section_title": "THE FOURTH BOOKE OF MOSES, called NVMBERS"
+  },
+  {
+    "book": "Deuteronomy",
+    "section_title": "THE FIFTH BOOKE OF MOSES, called DEVTERONOMIE"
+  },
+  {
+    "book": "Joshua",
+    "section_title": "THE BOOKE OF IOSHVVA"
+  },
+  {
+    "book": "Psalmes",
+    "section_title": "THE PSALMES"
+  },
+  {
+    "book": "Matthew",
+    "section_title": "The Gospel according to S. MATTHEVV"
+  },
+  {
+    "book": "Mark",
+    "section_title": "The Gospel according to S. MARKE"
+  },
+  {
+    "book": "Luke",
+    "section_title": "The Gospel according to S. LVKE"
+  },
+  {
+    "book": "John",
+    "section_title": "The Gospel according to S. IOHN"
+  },
+  {
+    "book": "Acts",
+    "section_title": "THE ACTES OF THE APOSTLES"
+  },
+  {
+    "book": "Romans",
+    "section_title": "The Epistle of Paul the Apostle to the ROMANES"
+  },
+  {
+    "book": "Revelation",
+    "section_title": "The Revelation of S. Iohn the Divine"
+  }
+]

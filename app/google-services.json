@@ -1,31 +1,21 @@
 {
-  "_comment": "SETUP REQUIRED: Replace this file with your actual google-services.json from Firebase Console",
-  "_instructions": [
-    "1. Go to https://console.firebase.google.com/",
-    "2. Create a new Firebase project or select existing one",
-    "3. Add an Android app with package name: com.purewords1611.android",
-    "4. Download the google-services.json file",
-    "5. Replace this file with the downloaded google-services.json",
-    "6. For development, you can use this placeholder - Analytics will be disabled"
-  ],
   "project_info": {
-    "project_number": "123456789000",
-    "firebase_url": "https://purewords1611-placeholder.firebaseio.com",
-    "project_id": "purewords1611-placeholder",
-    "storage_bucket": "purewords1611-placeholder.appspot.com"
+    "project_number": "975237880181",
+    "project_id": "pure-words-1611",
+    "storage_bucket": "pure-words-1611.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:123456789000:android:0000000000000000000000",
+        "mobilesdk_app_id": "1:975237880181:android:4248b02d9456f1cfe45b3c",
         "android_client_info": {
-          "package_name": "com.purewords1611.android"
+          "package_name": "com.chadlapointe.purewords1611"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDEMO-PLACEHOLDER-KEY-REPLACE-THIS"
+          "current_key": "AIzaSyDwSjITF5KJBwUINuxWtdU4_EwriKw0sJs"
         }
       ],
       "services": {

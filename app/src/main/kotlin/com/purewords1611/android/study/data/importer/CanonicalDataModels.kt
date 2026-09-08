@@ -17,6 +17,7 @@ data class CanonicalVerseRecord(
     val canonicalOrder: Int,
     val originalText: String,
     val modernizedText: String,
+    val standardText: String? = null,
     val comparativeText: String?,
     val hasItalicWords: Boolean,
     val sourceId: String,

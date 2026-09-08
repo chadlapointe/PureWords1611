@@ -2,16 +2,10 @@ package com.purewords1611.android.study.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.RoomDatabase
 import com.purewords1611.android.study.data.OfflineStudyRepository
 import com.purewords1611.android.study.data.StudyRepository
-import com.purewords1611.android.study.data.local.ExplanationDao
-import com.purewords1611.android.study.data.local.BookmarkDao
-import com.purewords1611.android.study.data.local.MarginalNoteDao
-import com.purewords1611.android.study.data.local.HighlightDao
-import com.purewords1611.android.study.data.local.PersonalNoteDao
-import com.purewords1611.android.study.data.local.ReadingPreferenceDao
-import com.purewords1611.android.study.data.local.StudyDatabase
-import com.purewords1611.android.study.data.local.VerseDao
+import com.purewords1611.android.study.data.local.*
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -23,18 +17,21 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object StudyDatabaseModule {
+
     @Provides
     @Singleton
     fun provideStudyDatabase(
         @ApplicationContext context: Context,
     ): StudyDatabase {
+        val dbName = "pure_words_study.db"
+        
         return Room.databaseBuilder(
             context,
             StudyDatabase::class.java,
-            "pure_words_study.db"
+            dbName,
         )
-            .createFromAsset("database/full_1611_bible.db")
             .fallbackToDestructiveMigration()
+            .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
             .build()
     }
 
@@ -59,6 +56,27 @@ object StudyDatabaseModule {
 
     @Provides
     fun providePersonalNoteDao(database: StudyDatabase): PersonalNoteDao = database.personalNoteDao()
+
+    @Provides
+    fun provideFrontMatterDao(database: StudyDatabase): FrontMatterDao = database.frontMatterDao()
+
+    @Provides
+    fun provideChapterCompletionDao(database: StudyDatabase): ChapterCompletionDao = database.chapterCompletionDao()
+
+    @Provides
+    fun provideChapterSummaryDao(database: StudyDatabase): ChapterSummaryDao = database.chapterSummaryDao()
+
+    @Provides
+    fun provideVerseTitleDao(database: StudyDatabase): VerseTitleDao = database.verseTitleDao()
+
+    @Provides
+    fun provideLexiconDao(database: StudyDatabase): LexiconDao = database.lexiconDao()
+
+    @Provides
+    fun provideStudyStatsDao(database: StudyDatabase): StudyStatsDao = database.studyStatsDao()
+
+    @Provides
+    fun provideMarginaliaDao(database: StudyDatabase): MarginaliaDao = database.marginaliaDao()
 }
 
 @Module
@@ -67,6 +85,6 @@ abstract class StudyRepositoryModule {
     @Binds
     @Singleton
     abstract fun bindStudyRepository(
-        implementation: OfflineStudyRepository
+        implementation: OfflineStudyRepository,
     ): StudyRepository
 }

@@ -3,35 +3,77 @@
     "step_id": "full-ev-1",
     "track_id": "FULL_EVIDENCE",
     "sequence": 1,
-    "title": "The Mandate",
-    "body_markdown": "King James I commissioned the translation in 1604, aiming for a version that was accurate and accessible."
+    "title": "The Divine Mandate",
+    "body_markdown": "King James I commissioned the translation in 1604 at the Hampton Court Conference. The goal was a single, authoritative translation that would unify the kingdom and remain faithful to the original tongues."
   },
   {
     "step_id": "full-ev-2",
     "track_id": "FULL_EVIDENCE",
     "sequence": 2,
-    "title": "The Translators",
-    "body_markdown": "Six committees comprising 47 of the greatest scholars of the day worked diligently on the translation."
+    "title": "The Translators' Dedication",
+    "body_markdown": "Forty-seven of the era's most brilliant scholars, organized into six committees (companies), spent seven years in rigorous study and cross-review to ensure every word was weighed and settled."
   },
   {
     "step_id": "full-ev-3",
     "track_id": "FULL_EVIDENCE",
     "sequence": 3,
-    "title": "The 1611 Printing",
-    "body_markdown": "The first edition was printed by Robert Barker in 1611, featuring unique orthography and marginal notes."
+    "title": "The First Printing (1611)",
+    "body_markdown": "Printed by Robert Barker, the 1611 edition was a masterpiece of typography. It included distinct 'He' and 'She' editions, reflecting the living process of the Word's first public appearance."
   },
   {
     "step_id": "full-ev-4",
     "track_id": "FULL_EVIDENCE",
     "sequence": 4,
-    "title": "The Apocrypha",
-    "body_markdown": "The original 1611 KJV included the Apocrypha between the Testaments, as part of the historical corpus."
+    "title": "The Marginal Notes",
+    "body_markdown": "The 1611 contains over 8,000 marginal notes, providing alternative translations and cross-references, revealing the translators' transparency and depth of scholarship."
   },
   {
     "step_id": "full-ev-5",
     "track_id": "FULL_EVIDENCE",
     "sequence": 5,
-    "title": "Standardization",
-    "body_markdown": "Over the centuries, spellings were modernized, leading to the versions commonly used today, while the 1611 remains the foundation."
+    "title": "Providential Preservation",
+    "body_markdown": "The transition from the 1611 to the 1769 Standard edition involved primarily orthographic updates (spelling and punctuation), not textual changes, demonstrating God's hand in preserving the Pure Word."
+  },
+  {
+    "step_id": "full-ev-6",
+    "track_id": "FULL_EVIDENCE",
+    "sequence": 6,
+    "title": "The Role of Italics",
+    "body_markdown": "The 1611 translators used distinct 'Italic' type (or small Roman type in Blackletter editions) to mark words not present in the original Hebrew or Greek but necessary for English sense, demonstrating supreme honesty."
+  },
+  {
+    "step_id": "full-ev-7",
+    "track_id": "FULL_EVIDENCE",
+    "sequence": 7,
+    "title": "A Standard for All Time",
+    "body_markdown": "The 1611 Authorized Version has stood for over four centuries as the high-water mark of the English Bible, used by God to bring revival and salvation to millions across the globe."
+  },
+  {
+    "step_id": "hist-ctx-1",
+    "track_id": "HISTORICAL_CONTEXT",
+    "sequence": 1,
+    "title": "The Jacobean Landscape",
+    "body_markdown": "England in 1611 was a time of linguistic explosion. The English language was at its peak of expressive power, providing the perfect vessel for the Holy Scriptures."
+  },
+  {
+    "step_id": "hist-ctx-2",
+    "track_id": "HISTORICAL_CONTEXT",
+    "sequence": 2,
+    "title": "The Rules of Translation",
+    "body_markdown": "The translators followed 15 specific rules. Rule 1 mandated following the Bishops' Bible where possible, while Rule 14 listed other acceptable translations for comparison when necessary."
+  },
+  {
+    "step_id": "hist-ctx-3",
+    "track_id": "HISTORICAL_CONTEXT",
+    "sequence": 3,
+    "title": "The Printing House",
+    "body_markdown": "Explore the challenges of the Barker printing house. Mechanical errors in the first run (like the famous 'Great He Bible') remind us of the human element in the physical production of the Word."
+  },
+  {
+    "step_id": "hist-ctx-4",
+    "track_id": "HISTORICAL_CONTEXT",
+    "sequence": 4,
+    "title": "The Scholars' Library",
+    "body_markdown": "The translators didn't just use the Textus Receptus; they consulted ancient Polyglot Bibles, Rabbinic commentaries, and early Church Father writings to ensure the most accurate rendering."
   }
 ]
