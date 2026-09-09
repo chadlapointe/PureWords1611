@@ -216,7 +216,12 @@ private class FakeStudyRepository : StudyRepository {
     override fun observeImportProgress(): Flow<Float> = flowOf(1.0f)
 
     override suspend fun addBookmark(verseId: Long) = Unit
+    override suspend fun removeBookmark(verseId: Long) = Unit
+    override suspend fun toggleBookmark(verseId: Long) = Unit
     override suspend fun addHighlight(verseId: Long, colorName: String) = Unit
+    override suspend fun removeHighlight(verseId: Long) = Unit
+    override suspend fun toggleHighlight(verseId: Long, colorName: String) = Unit
+    override fun observeAllMarginalia(): Flow<List<MarginaliaEntity>> = flowOf(emptyList())
     override suspend fun savePersonalNote(verseId: Long, note: String, category: String?) = Unit
     override suspend fun saveLastReadPosition(book: String, chapter: Int, verseId: Long?) = Unit
     override suspend fun saveSpeechRate(rate: Float) = Unit

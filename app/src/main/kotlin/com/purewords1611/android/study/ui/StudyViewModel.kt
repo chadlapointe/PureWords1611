@@ -5,6 +5,7 @@ import com.purewords1611.android.study.data.*
 import com.purewords1611.android.study.data.local.ChapterCompletionEntity
 import com.purewords1611.android.study.data.local.VerseTitleEntity
 import com.purewords1611.android.study.data.local.LexiconEntity
+import com.purewords1611.android.study.data.local.MarginaliaEntity
 import com.purewords1611.android.study.data.local.StreakInfo
 import com.purewords1611.android.study.service.PdfExportManager
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -67,6 +68,9 @@ data class StudyUiState(
     val selectedPhrase: String? = null,
     val comparisonTranslation: TranslationMode = TranslationMode.ESV,
     val isFacsimileMode: Boolean = false,
+    val highlightsMap: Map<Long, String> = emptyMap(),
+    val bookmarkedVerseIdsSet: Set<Long> = emptySet(),
+    val marginaliaList: List<MarginaliaEntity> = emptyList(),
 )
 
 enum class StudyThemeMode { LIGHT, DARK, SEPIA }
@@ -243,6 +247,15 @@ class StudyViewModel @Inject constructor(
     val highlights = repository.observeHighlights()
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
+    val allMarginalia = repository.observeAllMarginalia()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    val highlightsMapFlow = highlights.map { list -> list.associate { it.verseId to it.colorName } }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
+
+    val bookmarkedVerseIdsFlow = bookmarks.map { list -> list.map { it.verseId }.toSet() }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
+
     val seekerTracks = repository.observeSeekerTracks()
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
@@ -328,6 +341,9 @@ class StudyViewModel @Inject constructor(
                 selectedPhrase,
                 comparisonTranslation,
                 isFacsimileMode,
+                highlightsMapFlow,
+                bookmarkedVerseIdsFlow,
+                allMarginalia,
             ) { args ->
                 StudyUiState(
                     orthographyMode = args[0] as OrthographyMode,
@@ -370,6 +386,9 @@ class StudyViewModel @Inject constructor(
                     selectedPhrase = args[36] as String?,
                     comparisonTranslation = args[37] as TranslationMode,
                     isFacsimileMode = args[38] as Boolean,
+                    highlightsMap = args[39] as Map<Long, String>,
+                    bookmarkedVerseIdsSet = args[40] as Set<Long>,
+                    marginaliaList = args[41] as List<MarginaliaEntity>,
                     dailyReadingLesson = calculateDailyLesson(),
                     speechRate = audioService?.getSpeechRate() ?: 1.0f,
                     availableVoices = audioService?.getAvailableVoices() ?: emptyList(),
@@ -398,6 +417,26 @@ class StudyViewModel @Inject constructor(
     
     fun toggleFacsimileMode() {
         isFacsimileMode.value = !isFacsimileMode.value
+    }
+    fun removeBookmark(verseId: Long) {
+        viewModelScope.launch {
+            repository.removeBookmark(verseId)
+        }
+    }
+    fun toggleBookmark(verseId: Long) {
+        viewModelScope.launch {
+            repository.toggleBookmark(verseId)
+        }
+    }
+    fun removeHighlight(verseId: Long) {
+        viewModelScope.launch {
+            repository.removeHighlight(verseId)
+        }
+    }
+    fun toggleHighlight(verseId: Long, colorName: String) {
+        viewModelScope.launch {
+            repository.toggleHighlight(verseId, colorName)
+        }
     }
     fun updateQuery(v: String) { 
         query.value = v 
@@ -496,9 +535,9 @@ class StudyViewModel @Inject constructor(
     }
     fun setExplanationDepth(d: ExplanationDepth) { viewModelScope.launch { repository.setExplanationDepth(d) } }
     fun selectSeekerTrack(id: String) { activeSeekerTrackId.value = id }
-    fun addBookmarkForSelectedVerse() { selectedVerseId.value?.let { viewModelScope.launch { repository.addBookmark(it) } } }
+    fun addBookmarkForSelectedVerse() { selectedVerseId.value?.let { toggleBookmark(it) } }
     fun savePersonalNoteForSelectedVerse(n: String, c: String? = null) { n.trim().takeIf { it.isNotBlank() }?.let { note -> selectedVerseId.value?.let { viewModelScope.launch { repository.savePersonalNote(it, note, c) } } } }
-    fun addHighlightForSelectedVerse(c: String = "yellow") { selectedVerseId.value?.let { viewModelScope.launch { repository.addHighlight(it, c) } } }
+    fun addHighlightForSelectedVerse(c: String = "Yellow") { selectedVerseId.value?.let { toggleHighlight(it, c) } }
     fun readFullChapter(startId: Long? = null) { 
         viewModelScope.launch { 
             val ch = activeChapter.value ?: return@launch

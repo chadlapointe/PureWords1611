@@ -53,7 +53,12 @@ interface StudyRepository {
     fun observeSelectedVoice(): Flow<String?>
     fun observeImportProgress(): Flow<Float>
     suspend fun addBookmark(verseId: Long)
+    suspend fun removeBookmark(verseId: Long)
+    suspend fun toggleBookmark(verseId: Long)
     suspend fun addHighlight(verseId: Long, colorName: String)
+    suspend fun removeHighlight(verseId: Long)
+    suspend fun toggleHighlight(verseId: Long, colorName: String)
+    fun observeAllMarginalia(): Flow<List<MarginaliaEntity>>
     suspend fun savePersonalNote(verseId: Long, note: String, category: String? = null)
     suspend fun setExplanationDepth(level: ExplanationDepth)
     suspend fun saveLastReadPosition(book: String, chapter: Int, verseId: Long? = null)
@@ -353,6 +358,47 @@ class OfflineStudyRepository @Inject constructor(
                 createdAtEpochMillis = System.currentTimeMillis()
             )
         )
+    }
+
+    override suspend fun removeBookmark(verseId: Long) = withContext(Dispatchers.IO) {
+        bookmarkDao.deleteByVerse(verseId)
+    }
+
+    override suspend fun toggleBookmark(verseId: Long) = withContext(Dispatchers.IO) {
+        val existing = bookmarkDao.getByVerse(verseId)
+        if (existing != null) {
+            bookmarkDao.deleteByVerse(verseId)
+        } else {
+            bookmarkDao.insert(
+                BookmarkEntity(
+                    verseId = verseId,
+                    createdAtEpochMillis = System.currentTimeMillis()
+                )
+            )
+        }
+    }
+
+    override suspend fun removeHighlight(verseId: Long) = withContext(Dispatchers.IO) {
+        highlightDao.deleteByVerse(verseId)
+    }
+
+    override suspend fun toggleHighlight(verseId: Long, colorName: String) = withContext(Dispatchers.IO) {
+        val existing = highlightDao.getByVerse(verseId)
+        if (existing != null && existing.colorName == colorName) {
+            highlightDao.deleteByVerse(verseId)
+        } else {
+            highlightDao.insert(
+                HighlightEntity(
+                    verseId = verseId,
+                    colorName = colorName,
+                    createdAtEpochMillis = System.currentTimeMillis()
+                )
+            )
+        }
+    }
+
+    override fun observeAllMarginalia(): Flow<List<MarginaliaEntity>> {
+        return marginaliaDao.observeAll().flowOn(Dispatchers.IO)
     }
 
     override suspend fun savePersonalNote(verseId: Long, note: String, category: String?) = withContext(Dispatchers.IO) {

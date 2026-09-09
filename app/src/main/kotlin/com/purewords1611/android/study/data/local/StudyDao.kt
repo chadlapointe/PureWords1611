@@ -127,8 +127,14 @@ interface BookmarkDao {
     @Query("SELECT * FROM bookmarks ORDER BY createdAtEpochMillis DESC")
     fun observeAll(): Flow<List<BookmarkEntity>>
 
+    @Query("SELECT * FROM bookmarks WHERE verseId = :verseId")
+    suspend fun getByVerse(verseId: Long): BookmarkEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(bookmark: BookmarkEntity)
+
+    @Query("DELETE FROM bookmarks WHERE verseId = :verseId")
+    suspend fun deleteByVerse(verseId: Long)
 }
 
 @Dao
@@ -145,8 +151,14 @@ interface HighlightDao {
     @Query("SELECT * FROM highlights ORDER BY createdAtEpochMillis DESC")
     fun observeAll(): Flow<List<HighlightEntity>>
 
+    @Query("SELECT * FROM highlights WHERE verseId = :verseId")
+    suspend fun getByVerse(verseId: Long): HighlightEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(highlight: HighlightEntity)
+
+    @Query("DELETE FROM highlights WHERE verseId = :verseId")
+    suspend fun deleteByVerse(verseId: Long)
 }
 
 @Dao
@@ -286,6 +298,9 @@ interface StudyStatsDao {
 
 @Dao
 interface MarginaliaDao {
+    @Query("SELECT * FROM marginalia ORDER BY updatedAtEpochMillis DESC")
+    fun observeAll(): Flow<List<MarginaliaEntity>>
+
     @Query("SELECT * FROM marginalia WHERE book = :book AND chapter = :chapter")
     fun observeByChapter(book: String, chapter: Int): Flow<MarginaliaEntity?>
 

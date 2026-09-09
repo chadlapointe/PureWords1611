@@ -354,7 +354,22 @@ fun StudyAppRoot(
                                 }
                             )
                         }
-                        RootDestination.NOTES -> NotesScreen(uiState, bookmarks, personalNotes, highlights, onB = viewModel::addBookmarkForSelectedVerse, onH = viewModel::addHighlightForSelectedVerse, onN = viewModel::savePersonalNoteForSelectedVerse)
+                        RootDestination.NOTES -> AnnotationsScreen(
+                            highlights = highlights,
+                            bookmarks = bookmarks,
+                            marginalia = uiState.marginaliaList,
+                            personalNotes = personalNotes,
+                            onVerseClick = { vId ->
+                                viewModel.selectVerse(vId)
+                                viewModel.setDestination(RootDestination.READ)
+                            },
+                            onChapterClick = { book, ch ->
+                                viewModel.selectChapter(book, ch)
+                                viewModel.setDestination(RootDestination.READ)
+                            },
+                            onRemoveHighlight = { vId -> viewModel.removeHighlight(vId) },
+                            onRemoveBookmark = { vId -> viewModel.removeBookmark(vId) }
+                        )
                         RootDestination.SEEKER_PATH -> SeekerPathScreen(seekerTracks, uiState.activeSeekerTrackId, seekerSteps, onS = viewModel::selectSeekerTrack)
                         RootDestination.FRONT_MATTER -> FrontMatterScreen(selectedFrontMatter, uiState.orthographyMode, uiState.fontSize, uiState.selectedFont, uiState.translationMode)
                         RootDestination.GALLERY -> {
@@ -412,7 +427,7 @@ fun StudyAppRoot(
                         },
                         onTPA = viewModel::toggleParallelAudio,
                         onB = { viewModel.addBookmarkForSelectedVerse() },
-                        onH = { viewModel.addHighlightForSelectedVerse() },
+                        onH = { colorName -> viewModel.addHighlightForSelectedVerse(colorName) },
                         onN = { note, tag -> viewModel.savePersonalNoteForSelectedVerse(note, tag) },
                         onExport = viewModel::exportChapterToPdf,
                         onSh = { t ->
@@ -942,8 +957,9 @@ private fun ReadScreen(
                     is ReaderItem.VerseTitle -> VerseTitleItem(itm.title, itm.translation, state.selectedFont)
                     is ReaderItem.VerseLine -> {
                         val isF = if (idx > 0) pagingItems[idx - 1] is ReaderItem.ChapterHeader || pagingItems[idx - 1] is ReaderItem.CompositeHeader else false
-                        if (isF && state.query.isBlank()) DropCapVerseLine(itm.verse, state.orthographyMode, state.translationMode, state.highlightedVerseId == itm.verse.id, state.selectedVerseId == itm.verse.id, state.isOrthographyModernized, state.isLexiconEnabled, state.fontSize, state.selectedFont, { onVerseSelected(itm.verse.id) }, onStrongsClick, onGlossaryClick, onWordClick)
-                        else VerseTextLine(itm.verse, state.orthographyMode, state.translationMode, state.highlightedVerseId == itm.verse.id, state.selectedVerseId == itm.verse.id, state.query.isNotBlank(), state.query, state.isOrthographyModernized, state.isLexiconEnabled, state.fontSize, state.selectedFont, { onVerseSelected(itm.verse.id) }, onStrongsClick, onGlossaryClick, onWordClick)
+                        val hlColor = state.highlightsMap[itm.verse.id]
+                        if (isF && state.query.isBlank()) DropCapVerseLine(itm.verse, state.orthographyMode, state.translationMode, state.highlightedVerseId == itm.verse.id, state.selectedVerseId == itm.verse.id, state.isOrthographyModernized, state.isLexiconEnabled, state.fontSize, state.selectedFont, hlColor, { onVerseSelected(itm.verse.id) }, onStrongsClick, onGlossaryClick, onWordClick)
+                        else VerseTextLine(itm.verse, state.orthographyMode, state.translationMode, state.highlightedVerseId == itm.verse.id, state.selectedVerseId == itm.verse.id, state.query.isNotBlank(), state.query, state.isOrthographyModernized, state.isLexiconEnabled, state.fontSize, state.selectedFont, hlColor, { onVerseSelected(itm.verse.id) }, onStrongsClick, onGlossaryClick, onWordClick)
                     }
                 }
             }
@@ -1427,8 +1443,9 @@ private fun VerseTitleItem(title: String, translation: TranslationMode, font: St
         Text(d, style = MaterialTheme.typography.titleLarge.copy(fontStyle = FontStyle.Italic, letterSpacing = 2.sp, fontFamily = legibleFont), modifier = Modifier.padding(top = 16.dp), color = MaterialTheme.colorScheme.onSurface) 
     } 
 }
-@Composable private fun VerseTextLine(v: VerseText, m: OrthographyMode, t: TranslationMode, iH: Boolean, iS: Boolean, iSM: Boolean, q: String, isOM: Boolean, isL: Boolean, fs: Float, f: StudyFont, onClick: () -> Unit, onS: (String) -> Unit, onG: (String) -> Unit, onW: (String?) -> Unit) { 
-    Row(Modifier.fillMaxWidth().clickable(onClick = onClick).background(if (iH) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f) else if (iS) MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f) else Color.Transparent).padding(horizontal = 16.dp, vertical = 8.dp)) { 
+@Composable private fun VerseTextLine(v: VerseText, m: OrthographyMode, t: TranslationMode, iH: Boolean, iS: Boolean, iSM: Boolean, q: String, isOM: Boolean, isL: Boolean, fs: Float, f: StudyFont, hlColor: String? = null, onClick: () -> Unit, onS: (String) -> Unit, onG: (String) -> Unit, onW: (String?) -> Unit) { 
+    val rowBg = if (hlColor != null) getHighlightColor(hlColor).copy(alpha = 0.35f) else if (iH) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f) else if (iS) MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f) else Color.Transparent
+    Row(Modifier.fillMaxWidth().clickable(onClick = onClick).background(rowBg).padding(horizontal = 16.dp, vertical = 8.dp)) { 
         Text(v.verse.toString(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, modifier = Modifier.width(24.dp).padding(top = 4.dp))
         Column(Modifier.weight(1f)) { 
             if (iSM) {
@@ -1481,8 +1498,9 @@ private fun VerseTitleItem(title: String, translation: TranslationMode, font: St
         } 
     } 
 }
-@Composable private fun DropCapVerseLine(v: VerseText, m: OrthographyMode, t: TranslationMode, iH: Boolean, iS: Boolean, isOM: Boolean, isL: Boolean, fs: Float, f: StudyFont, onClick: () -> Unit, onS: (String) -> Unit, onG: (String) -> Unit, onW: (String?) -> Unit) { 
-    Row(Modifier.fillMaxWidth().clickable(onClick = onClick).background(if (iH) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f) else if (iS) MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f) else Color.Transparent).padding(horizontal = 16.dp, vertical = 12.dp)) { 
+@Composable private fun DropCapVerseLine(v: VerseText, m: OrthographyMode, t: TranslationMode, iH: Boolean, iS: Boolean, isOM: Boolean, isL: Boolean, fs: Float, f: StudyFont, hlColor: String? = null, onClick: () -> Unit, onS: (String) -> Unit, onG: (String) -> Unit, onW: (String?) -> Unit) { 
+    val rowBg = if (hlColor != null) getHighlightColor(hlColor).copy(alpha = 0.35f) else if (iH) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f) else if (iS) MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f) else Color.Transparent
+    Row(Modifier.fillMaxWidth().clickable(onClick = onClick).background(rowBg).padding(horizontal = 16.dp, vertical = 12.dp)) { 
         Text(v.verse.toString(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, modifier = Modifier.width(24.dp).padding(top = 8.dp))
         
         val annotatedTxt = if (isL && v.strongsText != null && t == TranslationMode.KJV_1611 && m == OrthographyMode.ORIGINAL_1611) {
@@ -1595,7 +1613,7 @@ private fun StudyHubSheet(
     onRes: () -> Unit,
     onTPA: () -> Unit,
     onB: () -> Unit,
-    onH: () -> Unit,
+    onH: (String) -> Unit,
     onN: (String, String?) -> Unit,
     onExport: () -> Unit,
     onSh: (String) -> Unit,
@@ -1654,9 +1672,91 @@ private fun StudyHubSheet(
                 Text(label, textAlign = TextAlign.Center)
             }
         }
+        // Selection Toolbar & BibleGateway Swatches
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    shape = MaterialTheme.shapes.medium
+                )
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val isStarred = s.selectedVerseId?.let { s.bookmarkedVerseIdsSet.contains(it) } == true
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                IconButton(onClick = onB) {
+                    Icon(
+                        imageVector = if (isStarred) androidx.compose.material.icons.Icons.Default.Star else androidx.compose.material.icons.Icons.Default.Star,
+                        contentDescription = "Favorite",
+                        tint = if (isStarred) Color(0xFFFFC107) else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Text("Highlight:", style = MaterialTheme.typography.labelMedium)
+                val currentHighlight = s.selectedVerseId?.let { s.highlightsMap[it] }
+                listOf(
+                    "Yellow" to Color(0xFFFFF59D),
+                    "Red" to Color(0xFFEF9A9A),
+                    "Blue" to Color(0xFF90CAF9),
+                    "Green" to Color(0xFFA5D6A7)
+                ).forEach { (colorName, color) ->
+                    val isSelected = currentHighlight == colorName
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clip(androidx.compose.foundation.shape.CircleShape)
+                            .background(color)
+                            .border(
+                                width = if (isSelected) 2.dp else 1.dp,
+                                color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Gray,
+                                shape = androidx.compose.foundation.shape.CircleShape
+                            )
+                            .clickable {
+                                onH(colorName)
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (isSelected) {
+                            Icon(
+                                imageVector = androidx.compose.material.icons.Icons.Default.Check,
+                                contentDescription = null,
+                                tint = Color.Black,
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.horizontalScroll(rememberScrollState())) {
-            AssistChip(onClick = onB, label = { Text("Bookmark") })
-            AssistChip(onClick = onH, label = { Text("Highlight") })
+            AssistChip(onClick = onB, label = { Text(if (s.selectedVerseId?.let { s.bookmarkedVerseIdsSet.contains(it) } == true) "Starred ★" else "Star ★") })
+            AssistChip(
+                onClick = {
+                    val translationName = when(s.translationMode) {
+                        TranslationMode.KJV_1611 -> "KJV 1611"
+                        TranslationMode.KJV_STANDARD -> "Standard KJV"
+                        TranslationMode.ESV -> "English Standard Version (ESV)"
+                    }
+                    val citation = if (s.translationMode == TranslationMode.KJV_1611) {
+                        "${s.activeChapter?.bookOriginal ?: s.activeChapter?.book}, Chap. ${toRomanNumeral(s.activeChapter?.chapter ?: 1)}"
+                    } else {
+                        "${s.activeChapter?.book} ${s.activeChapter?.chapter}"
+                    }
+                    VerseShareImageGenerator.generateAndShareVerseImage(
+                        context,
+                        s.selectedVerseDisplayText,
+                        citation,
+                        translationName
+                    )
+                },
+                label = { Text("Share Image Card") },
+                leadingIcon = { Icon(Icons.Default.Share, null, Modifier.size(16.dp)) }
+            )
             if (s.selectedPhrase != null) {
                 AssistChip(
                     onClick = {
@@ -1697,7 +1797,7 @@ private fun StudyHubSheet(
                     val text = "📜 \"${s.selectedVerseDisplayText}\"\n— $citation ($translationName)\n\nStudy the Pure Words 1611 Bible App."
                     onSh(text) 
                 },
-                label = { Text("Share") },
+                label = { Text("Share Text") },
                 leadingIcon = { Icon(Icons.Default.Share, null, Modifier.size(16.dp)) }
             )
         }
