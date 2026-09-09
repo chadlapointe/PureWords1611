@@ -36,6 +36,6 @@ object DataModule {
     fun provideWordDictionary(
         @ApplicationContext context: Context
     ): WordDictionary {
-        return WordDictionary(context)
+        return com.purewords1611.android.data.KjvWordDictionary(context)
     }
 }

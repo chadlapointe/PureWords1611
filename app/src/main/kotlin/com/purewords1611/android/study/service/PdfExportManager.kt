@@ -18,7 +18,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class PdfExportManager @Inject constructor(
+open class PdfExportManager @Inject constructor(
     @param:ApplicationContext private val context: Context,
 ) {
     fun exportChapter(

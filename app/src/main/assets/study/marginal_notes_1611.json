@@ -7,7 +7,7 @@
     "anchor_token": "heauen",
     "source_id": "kjv1611-facsimile-sample",
     "source_locator": "Genesis 1:1",
-    "checksum_sha256": "82"
+    "checksum_sha256": "9591087c2da095e81d849d94339fe9386ea03f680a71db32832836b0a96aa5cb"
   },
   {
     "id": 2,
@@ -17,7 +17,7 @@
     "anchor_token": "pure words",
     "source_id": "kjv1611-facsimile-sample",
     "source_locator": "Psalmes 12:6",
-    "checksum_sha256": "..."
+    "checksum_sha256": "d02e9553f83ed27a070ba662858d31b6a4e4602583a156c68f19ed3b416c5506"
   },
   {
     "id": 3,
@@ -27,7 +27,7 @@
     "anchor_token": "poore in spirit",
     "source_id": "kjv1611-facsimile-sample",
     "source_locator": "Matthew 5:3",
-    "checksum_sha256": "..."
+    "checksum_sha256": "394a10be4ca536d514e244a75651f004718cfcae89aabaf400cc44a26608cdbf"
   },
   {
     "id": 4,
@@ -37,6 +37,6 @@
     "anchor_token": "LORD is my shepheard",
     "source_id": "kjv1611-facsimile-sample",
     "source_locator": "Psalmes 23:1",
-    "checksum_sha256": "..."
+    "checksum_sha256": "cc5482be8dc33fef1b2ec23c4572ff90044910b7dcb1a5d8444772d83ad6fbdb"
   }
 ]

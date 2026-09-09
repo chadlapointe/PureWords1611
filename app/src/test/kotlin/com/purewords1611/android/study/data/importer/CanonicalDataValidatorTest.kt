@@ -88,6 +88,28 @@ class CanonicalDataValidatorTest {
     }
 
     @Test
+    fun `asserts every checksum in every bundled JSON asset is exactly 64 lowercase hex characters`() {
+        val studyDir = java.io.File("src/main/assets/study").let { if (it.exists()) it else java.io.File("app/src/main/assets/study") }
+        val jsonFiles = studyDir.walkTopDown().filter { it.extension == "json" }.toList()
+        val hexRegex = Regex("^[0-9a-f]{64}$")
+        val checksumRegex = Regex(""""checksum_sha256"\s*:\s*"([^"]+)"""")
+        var checksumCount = 0
+
+        for (file in jsonFiles) {
+            val jsonText = file.readText(Charsets.UTF_8).removePrefix("\uFEFF")
+            for (match in checksumRegex.findAll(jsonText)) {
+                val checksum = match.groupValues[1]
+                org.junit.Assert.assertTrue(
+                    "Invalid checksum in ${file.name}: '$checksum'",
+                    checksum.matches(hexRegex)
+                )
+                checksumCount++
+            }
+        }
+        org.junit.Assert.assertTrue("Expected at least 1 checksum_sha256 field checked", checksumCount > 0)
+    }
+
+    @Test
     fun `rejects note with missing verse`() {
         val ex = assertThrows(IllegalArgumentException::class.java) {
             validator.validate(

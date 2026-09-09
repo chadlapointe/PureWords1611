@@ -5,7 +5,7 @@
     "level": "HISTORICAL_LINGUISTIC",
     "content_markdown": "The 1611 orthography uses \\\"heauen\\\" where modernized spelling is \\\"heaven\\\". This reflects the 17th-century usage of 'u' and 'v'.",
     "source_id": "kjv1611-facsimile-sample",
-    "checksum_sha256": "95..."
+    "checksum_sha256": "54256c34a6e3a7f5a3121b8dc44d0910ab36d30c99fb3ee00c8869b4722dd051"
   },
   {
     "explanation_id": "exp-ps-23-1-hld",
@@ -13,6 +13,6 @@
     "level": "HISTORICAL_LIGHT_DOCTRINAL",
     "content_markdown": "The use of \\\"shepheard\\\" with 'ea' is a common archaic spelling. Doctrinally, this highlights the personal relationship between the Lord and the believer as seen in the 1611 text.",
     "source_id": "kjv1611-facsimile-sample",
-    "checksum_sha256": "..."
+    "checksum_sha256": "2bc01cfdec532ec541a742d1cf388a75bc7b02884759256800645b6e96cd7db0"
   }
 ]

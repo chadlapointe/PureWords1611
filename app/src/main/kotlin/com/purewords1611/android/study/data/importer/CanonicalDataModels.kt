@@ -10,7 +10,7 @@ data class CanonicalSourceRecord(
 data class CanonicalVerseRecord(
     val id: Long,
     val book: String,
-    val bookOriginal: String?,
+    val bookOriginal: String? = null,
     val chapter: Int,
     val verse: Int,
     val section: TestamentSection,
@@ -18,7 +18,7 @@ data class CanonicalVerseRecord(
     val originalText: String,
     val modernizedText: String,
     val standardText: String? = null,
-    val comparativeText: String?,
+    val comparativeText: String? = null,
     val hasItalicWords: Boolean,
     val sourceId: String,
     val sourceLocator: String,

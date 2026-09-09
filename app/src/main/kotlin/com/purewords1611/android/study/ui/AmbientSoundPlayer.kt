@@ -8,7 +8,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class AmbientSoundPlayer @Inject constructor(
+open class AmbientSoundPlayer @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     private var mediaPlayer: MediaPlayer? = null
