@@ -218,9 +218,11 @@ private class FakeStudyRepository : StudyRepository {
     override suspend fun addBookmark(verseId: Long) = Unit
     override suspend fun removeBookmark(verseId: Long) = Unit
     override suspend fun toggleBookmark(verseId: Long) = Unit
+    override suspend fun toggleBookmarkRange(verseIds: List<Long>) = Unit
     override suspend fun addHighlight(verseId: Long, colorName: String) = Unit
     override suspend fun removeHighlight(verseId: Long) = Unit
     override suspend fun toggleHighlight(verseId: Long, colorName: String) = Unit
+    override suspend fun toggleHighlightRange(verseIds: List<Long>, colorName: String) = Unit
     override fun observeAllMarginalia(): Flow<List<MarginaliaEntity>> = flowOf(emptyList())
     override suspend fun savePersonalNote(verseId: Long, note: String, category: String?) = Unit
     override suspend fun saveLastReadPosition(book: String, chapter: Int, verseId: Long?) = Unit

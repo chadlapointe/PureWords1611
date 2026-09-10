@@ -71,6 +71,16 @@ data class StudyUiState(
     val highlightsMap: Map<Long, String> = emptyMap(),
     val bookmarkedVerseIdsSet: Set<Long> = emptySet(),
     val marginaliaList: List<MarginaliaEntity> = emptyList(),
+    val activeSelectionRange: SelectionRange? = null,
+)
+
+data class SelectionRange(
+    val startVerseId: Long,
+    val startOffset: Int = 0,
+    val endVerseId: Long,
+    val endOffset: Int = 0,
+    val selectedText: String = "",
+    val spannedVerseIds: List<Long> = emptyList()
 )
 
 enum class StudyThemeMode { LIGHT, DARK, SEPIA }
@@ -299,6 +309,35 @@ class StudyViewModel @Inject constructor(
         }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
+    private val activeSelectionRange = MutableStateFlow<SelectionRange?>(null)
+
+    fun selectVerseRange(startVerseId: Long, endVerseId: Long, spannedVerseIds: List<Long>, text: String = "") {
+        activeSelectionRange.value = SelectionRange(
+            startVerseId = startVerseId,
+            endVerseId = endVerseId,
+            selectedText = text,
+            spannedVerseIds = spannedVerseIds
+        )
+    }
+
+    fun clearSelectionRange() {
+        activeSelectionRange.value = null
+    }
+
+    fun toggleHighlightSelectionRange(colorName: String) {
+        val range = activeSelectionRange.value ?: return
+        viewModelScope.launch {
+            repository.toggleHighlightRange(range.spannedVerseIds, colorName)
+        }
+    }
+
+    fun toggleBookmarkSelectionRange() {
+        val range = activeSelectionRange.value ?: return
+        viewModelScope.launch {
+            repository.toggleBookmarkRange(range.spannedVerseIds)
+        }
+    }
+
     @Suppress("UNCHECKED_CAST")
     val uiState: StateFlow<StudyUiState> = repository.isReady.flatMapLatest { ready ->
         if (!ready) {
@@ -344,6 +383,7 @@ class StudyViewModel @Inject constructor(
                 highlightsMapFlow,
                 bookmarkedVerseIdsFlow,
                 allMarginalia,
+                activeSelectionRange,
             ) { args ->
                 StudyUiState(
                     orthographyMode = args[0] as OrthographyMode,
@@ -389,6 +429,7 @@ class StudyViewModel @Inject constructor(
                     highlightsMap = args[39] as Map<Long, String>,
                     bookmarkedVerseIdsSet = args[40] as Set<Long>,
                     marginaliaList = args[41] as List<MarginaliaEntity>,
+                    activeSelectionRange = args[42] as SelectionRange?,
                     dailyReadingLesson = calculateDailyLesson(),
                     speechRate = audioService?.getSpeechRate() ?: 1.0f,
                     availableVoices = audioService?.getAvailableVoices() ?: emptyList(),

@@ -65,7 +65,8 @@ data class HighlightEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val verseId: Long,
     val colorName: String,
-    val createdAtEpochMillis: Long
+    val createdAtEpochMillis: Long,
+    val groupId: String? = null
 )
 
 @Entity(tableName = "personal_notes")

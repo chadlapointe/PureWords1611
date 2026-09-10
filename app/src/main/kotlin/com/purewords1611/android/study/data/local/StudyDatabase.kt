@@ -4,7 +4,15 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverter
 import androidx.room.TypeConverters
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.purewords1611.android.study.data.TestamentSection
+
+val MIGRATION_50_51 = object : Migration(50, 51) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `highlights` ADD COLUMN `groupId` TEXT DEFAULT NULL")
+    }
+}
 
 @Database(
     entities = [
@@ -24,7 +32,7 @@ import com.purewords1611.android.study.data.TestamentSection
         StudyStatsEntity::class,
         MarginaliaEntity::class,
     ],
-    version = 50,
+    version = 51,
     exportSchema = false,
 )
 @TypeConverters(StudyTypeConverters::class)

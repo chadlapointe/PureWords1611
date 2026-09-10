@@ -55,9 +55,11 @@ interface StudyRepository {
     suspend fun addBookmark(verseId: Long)
     suspend fun removeBookmark(verseId: Long)
     suspend fun toggleBookmark(verseId: Long)
+    suspend fun toggleBookmarkRange(verseIds: List<Long>)
     suspend fun addHighlight(verseId: Long, colorName: String)
     suspend fun removeHighlight(verseId: Long)
     suspend fun toggleHighlight(verseId: Long, colorName: String)
+    suspend fun toggleHighlightRange(verseIds: List<Long>, colorName: String)
     fun observeAllMarginalia(): Flow<List<MarginaliaEntity>>
     suspend fun savePersonalNote(verseId: Long, note: String, category: String? = null)
     suspend fun setExplanationDepth(level: ExplanationDepth)
@@ -378,6 +380,23 @@ class OfflineStudyRepository @Inject constructor(
         }
     }
 
+    override suspend fun toggleBookmarkRange(verseIds: List<Long>) = withContext(Dispatchers.IO) {
+        val now = System.currentTimeMillis()
+        for (vId in verseIds) {
+            val existing = bookmarkDao.getByVerse(vId)
+            if (existing != null) {
+                bookmarkDao.deleteByVerse(vId)
+            } else {
+                bookmarkDao.insert(
+                    BookmarkEntity(
+                        verseId = vId,
+                        createdAtEpochMillis = now
+                    )
+                )
+            }
+        }
+    }
+
     override suspend fun removeHighlight(verseId: Long) = withContext(Dispatchers.IO) {
         highlightDao.deleteByVerse(verseId)
     }
@@ -394,6 +413,26 @@ class OfflineStudyRepository @Inject constructor(
                     createdAtEpochMillis = System.currentTimeMillis()
                 )
             )
+        }
+    }
+
+    override suspend fun toggleHighlightRange(verseIds: List<Long>, colorName: String) = withContext(Dispatchers.IO) {
+        val groupId = java.util.UUID.randomUUID().toString()
+        val now = System.currentTimeMillis()
+        for (vId in verseIds) {
+            val existing = highlightDao.getByVerse(vId)
+            if (existing != null && existing.colorName == colorName) {
+                highlightDao.deleteByVerse(vId)
+            } else {
+                highlightDao.insert(
+                    HighlightEntity(
+                        verseId = vId,
+                        colorName = colorName,
+                        createdAtEpochMillis = now,
+                        groupId = groupId
+                    )
+                )
+            }
         }
     }
 
