@@ -32,7 +32,6 @@ object StudyDatabaseModule {
         )
             .addMigrations(MIGRATION_50_51)
             .fallbackToDestructiveMigration()
-            .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
             .build()
     }
 

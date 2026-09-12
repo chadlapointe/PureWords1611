@@ -72,9 +72,10 @@ fun BibleSelectorDialog(
             .toList()
     }
     
-    var selectedBook by remember(selectedSection) { 
-        mutableStateOf(if (initialBook != null && chapters.find { it.book == initialBook }?.section == selectedSection) initialBook else filteredBooks.firstOrNull()) 
+    var selectedBookState by remember(selectedSection) { 
+        mutableStateOf(initialBook?.takeIf { b -> chapters.any { it.book == b && it.section == selectedSection } }) 
     }
+    val selectedBook = selectedBookState ?: filteredBooks.firstOrNull()
     
     var selectedChapter by remember(selectedBook) {
         mutableStateOf(chapters.find { it.book == selectedBook }?.chapter ?: 1)
@@ -155,7 +156,7 @@ fun BibleSelectorDialog(
                                     color = if (selectedBook == book) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clickable { selectedBook = book }
+                                        .clickable { selectedBookState = book }
                                         .padding(vertical = 12.dp, horizontal = 12.dp)
                                 )
                             }

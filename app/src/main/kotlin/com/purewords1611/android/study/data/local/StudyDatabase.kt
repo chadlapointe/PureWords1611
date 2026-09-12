@@ -11,6 +11,7 @@ import com.purewords1611.android.study.data.TestamentSection
 val MIGRATION_50_51 = object : Migration(50, 51) {
     override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("ALTER TABLE `highlights` ADD COLUMN `groupId` TEXT DEFAULT NULL")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_verses_lookup` ON `verses` (`section`, `book`, `chapter`, `id`)")
     }
 }
 

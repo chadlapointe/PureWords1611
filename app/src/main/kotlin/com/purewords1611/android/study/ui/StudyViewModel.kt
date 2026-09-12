@@ -238,27 +238,33 @@ class StudyViewModel @Inject constructor(
         val fourth: D,
     )
 
-    val chapterIndex = repository.observeChapterIndex()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    val chapterIndex = repository.isReady.flatMapLatest { ready ->
+        if (!ready) flowOf(emptyList()) else repository.observeChapterIndex()
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
     
     private val chapterIndexMap = chapterIndex.map { list ->
         list.associateBy { "${it.book}_${it.chapter}" }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
     
-    val allFrontMatter = repository.observeAllFrontMatter()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    val allFrontMatter = repository.isReady.flatMapLatest { ready ->
+        if (!ready) flowOf(emptyList()) else repository.observeAllFrontMatter()
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-    val bookmarks = repository.observeBookmarks()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    val bookmarks = repository.isReady.flatMapLatest { ready ->
+        if (!ready) flowOf(emptyList()) else repository.observeBookmarks()
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
         
-    val personalNotes = repository.observePersonalNotes()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    val personalNotes = repository.isReady.flatMapLatest { ready ->
+        if (!ready) flowOf(emptyList()) else repository.observePersonalNotes()
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
         
-    val highlights = repository.observeHighlights()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    val highlights = repository.isReady.flatMapLatest { ready ->
+        if (!ready) flowOf(emptyList()) else repository.observeHighlights()
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-    val allMarginalia = repository.observeAllMarginalia()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    val allMarginalia = repository.isReady.flatMapLatest { ready ->
+        if (!ready) flowOf(emptyList()) else repository.observeAllMarginalia()
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val highlightsMapFlow = highlights.map { list -> list.associate { it.verseId to it.colorName } }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
@@ -266,11 +272,13 @@ class StudyViewModel @Inject constructor(
     val bookmarkedVerseIdsFlow = bookmarks.map { list -> list.map { it.verseId }.toSet() }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
 
-    val seekerTracks = repository.observeSeekerTracks()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    val seekerTracks = repository.isReady.flatMapLatest { ready ->
+        if (!ready) flowOf(emptyList()) else repository.observeSeekerTracks()
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-    val chapterSummaries = repository.observeAllChapterSummaries()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    val chapterSummaries = repository.isReady.flatMapLatest { ready ->
+        if (!ready) flowOf(emptyList()) else repository.observeAllChapterSummaries()
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     private val allVerseTitles = repository.observeAllVerseTitles()
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
@@ -447,8 +455,10 @@ class StudyViewModel @Inject constructor(
         }
         viewModelScope.launch {
             repository.isReady.first { isReady -> isReady }
-            chapterIndex.first { it.isNotEmpty() }.firstOrNull()?.let { 
-                if (activeChapter.value == null) activeChapter.value = it 
+            repository.observeChapterIndex().collect { list ->
+                if (list.isNotEmpty() && activeChapter.value == null) {
+                    activeChapter.value = list.first()
+                }
             }
         }
         context.bindService(Intent(context, BibleAudioService::class.java), connection, Context.BIND_AUTO_CREATE)

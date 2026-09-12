@@ -19,20 +19,21 @@ class ManualDatabaseInitializer @Inject constructor(
 ) {
     private val dbName = "pure_words_study.db"
     private val assetName = "database/full_1611_bible.db"
-    private val dbVersion = 50
-    private val identityHash = "7ea3d833e3a4a3f87a201b3f1149b959"
+    private val dbVersion = 51
+    private val identityHash = "b898f5b4176a2e64a70551e0de00e6eb"
     private val mutex = Mutex()
-    private val tag = "ManualDbInit_v50"
+    private val tag = "ManualDbInit_v51"
 
     suspend fun ensureInitialized(): Unit = mutex.withLock {
         val dbFile = context.getDatabasePath(dbName)
         val currentVersion = getVersion(dbFile)
         val currentHash = getIdentityHash(dbFile)
+        val verseCount = getVerseCount(dbFile)
 
-        android.util.Log.i(tag, "Starting database initialization for version $dbVersion (current: $currentVersion, currentHash: $currentHash, expectedHash: $identityHash)")
+        android.util.Log.i(tag, "Starting database initialization for version $dbVersion (current: $currentVersion, currentHash: $currentHash, expectedHash: $identityHash, verses: $verseCount)")
 
-        if ((currentVersion < dbVersion) || (currentHash != identityHash)) {
-            android.util.Log.i(tag, "Database needs re-initialization (version or hash mismatch)")
+        if ((currentVersion < dbVersion) || (currentHash != identityHash) || (verseCount == 0)) {
+            android.util.Log.i(tag, "Database needs re-initialization (version, hash mismatch, or empty verses table: $verseCount)")
             if (dbFile.exists()) {
                 deleteDatabaseFiles(dbFile)
             }
@@ -276,6 +277,19 @@ class ManualDatabaseInitializer @Inject constructor(
         }
     }
 
+    private fun getVerseCount(dbFile: File): Int {
+        if (!dbFile.exists()) return 0
+        return try {
+            SQLiteDatabase.openDatabase(dbFile.absolutePath, null, SQLiteDatabase.OPEN_READONLY).use { db ->
+                db.rawQuery("SELECT COUNT(*) FROM verses", null).use { cursor ->
+                    if (cursor.moveToFirst()) cursor.getInt(0) else 0
+                }
+            }
+        } catch (e: Exception) {
+            0
+        }
+    }
+
     private fun deleteDatabaseFiles(dbFile: File) {
         dbFile.delete()
         File("${dbFile.absolutePath}-shm").delete()
@@ -283,11 +297,16 @@ class ManualDatabaseInitializer @Inject constructor(
     }
 
     private fun copyAsset(dbFile: File) {
+        val tmpFile = File("${dbFile.absolutePath}.tmp")
+        if (tmpFile.exists()) tmpFile.delete()
         context.assets.open(assetName).use { input ->
-            FileOutputStream(dbFile).use { output ->
+            FileOutputStream(tmpFile).use { output ->
                 input.copyTo(output)
+                output.flush()
             }
         }
+        if (dbFile.exists()) deleteDatabaseFiles(dbFile)
+        tmpFile.renameTo(dbFile)
         android.util.Log.i(tag, "Asset copied. Size: ${dbFile.length()} bytes")
     }
 
@@ -300,7 +319,7 @@ class ManualDatabaseInitializer @Inject constructor(
             db.execSQL("CREATE TABLE IF NOT EXISTS ${b}marginal_notes$b (${b}id$b INTEGER NOT NULL, ${b}verseId$b INTEGER NOT NULL, ${b}noteType$b TEXT NOT NULL, ${b}note$b TEXT NOT NULL, ${b}anchorToken$b TEXT, ${b}sourceId$b TEXT NOT NULL, ${b}sourceLocator$b TEXT NOT NULL, ${b}checksumSha256$b TEXT NOT NULL, PRIMARY KEY(${b}id$b), FOREIGN KEY(${b}verseId$b) REFERENCES ${b}verses$b(${b}id$b) ON UPDATE NO ACTION ON DELETE CASCADE )")
             db.execSQL("CREATE INDEX IF NOT EXISTS ${b}index_marginal_notes_verseId$b ON ${b}marginal_notes$b (${b}verseId$b)")
             db.execSQL("CREATE TABLE IF NOT EXISTS ${b}bookmarks$b (${b}id$b INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, ${b}verseId$b INTEGER NOT NULL, ${b}createdAtEpochMillis$b INTEGER NOT NULL)")
-            db.execSQL("CREATE TABLE IF NOT EXISTS ${b}highlights$b (${b}id$b INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, ${b}verseId$b INTEGER NOT NULL, ${b}colorName$b TEXT NOT NULL, ${b}createdAtEpochMillis$b INTEGER NOT NULL)")
+            db.execSQL("CREATE TABLE IF NOT EXISTS ${b}highlights$b (${b}id$b INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, ${b}verseId$b INTEGER NOT NULL, ${b}colorName$b TEXT NOT NULL, ${b}createdAtEpochMillis$b INTEGER NOT NULL, ${b}groupId$b TEXT)")
             db.execSQL("CREATE TABLE IF NOT EXISTS ${b}personal_notes$b (${b}id$b INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, ${b}verseId$b INTEGER NOT NULL, ${b}note$b TEXT NOT NULL, ${b}updatedAtEpochMillis$b INTEGER NOT NULL, ${b}category$b TEXT)")
             db.execSQL("CREATE TABLE IF NOT EXISTS ${b}explanations$b (${b}id$b TEXT NOT NULL, ${b}verseId$b INTEGER NOT NULL, ${b}level$b TEXT NOT NULL, ${b}contentMarkdown$b TEXT NOT NULL, ${b}sourceId$b TEXT NOT NULL, ${b}checksumSha256$b TEXT NOT NULL, PRIMARY KEY(${b}id$b), FOREIGN KEY(${b}verseId$b) REFERENCES ${b}verses$b(${b}id$b) ON UPDATE NO ACTION ON DELETE CASCADE )")
             db.execSQL("CREATE INDEX IF NOT EXISTS ${b}index_explanations_verseId$b ON ${b}explanations$b (${b}verseId$b)")
