@@ -71,7 +71,7 @@ fun AnnotationsScreen(
                             AnnotationTab.FAVORITES -> bookmarks.size
                             AnnotationTab.NOTES -> marginalia.size + personalNotes.size
                         }
-                        Text("${tab.name.capitalize(Locale.ROOT)} ($count)")
+                        Text("${tab.name.lowercase().replaceFirstChar { it.uppercase() }} ($count)")
                     }
                 )
             }

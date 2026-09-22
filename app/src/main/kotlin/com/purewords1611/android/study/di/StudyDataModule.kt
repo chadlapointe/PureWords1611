@@ -2,7 +2,6 @@ package com.purewords1611.android.study.di
 
 import android.content.Context
 import androidx.room.Room
-import androidx.room.RoomDatabase
 import com.purewords1611.android.study.data.OfflineStudyRepository
 import com.purewords1611.android.study.data.StudyRepository
 import com.purewords1611.android.study.data.local.*
@@ -31,7 +30,7 @@ object StudyDatabaseModule {
             dbName,
         )
             .addMigrations(MIGRATION_50_51)
-            .fallbackToDestructiveMigration()
+            .fallbackToDestructiveMigration(dropAllTables = true)
             .build()
     }
 
