@@ -934,48 +934,46 @@ private fun ReadScreen(
             }
         }
 
-        SelectionContainer(modifier = Modifier.fillMaxSize()) {
-            LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 80.dp)) {
-                if (pagingItems.itemCount == 0) { item { Box(Modifier.fillParentMaxSize(), Alignment.Center) { Column(horizontalAlignment = Alignment.CenterHorizontally) { Text("Reading Pure Words..."); if (state.importProgress < 1f) { Text("Indexing: ${(state.importProgress * 100).toInt()}%", style = MaterialTheme.typography.labelSmall); Spacer(Modifier.height(16.dp)); LinearProgressIndicator(progress = { state.importProgress }, modifier = Modifier.width(200.dp)) } } } } }
-                items(pagingItems.itemCount, key = pagingItems.itemKey { itm -> when (itm) { is ReaderItem.SectionHeader -> "s_${itm.section}"; is ReaderItem.BookHeader -> "b_${itm.book}"; is ReaderItem.ChapterHeader -> "c_${itm.book}_${itm.chapter}"; is ReaderItem.VerseLine -> "v_${itm.verse.id}"; is ReaderItem.CompositeHeader -> "ch_${itm.section}_${itm.book}_${itm.chapter}"; is ReaderItem.VerseTitle -> "vt_${itm.title}_${itm.translation}" } }, contentType = pagingItems.itemContentType { it::class.java.simpleName }) { idx ->
-                    val itm = pagingItems[idx] ?: return@items
-                    when (itm) {
-                        is ReaderItem.CompositeHeader -> {
-                            val summary = chapterSummariesMap["${itm.book}_${itm.chapter}"]
-                            CompositeHeaderItem(
-                                itm = itm.copy(
-                                    summary1611 = summary?.summary1611,
-                                    titleEsv = summary?.titleEsv,
-                                    titleStandard = summary?.titleStandard,
-                                    sectionTitle = summary?.sectionTitle
-                                ),
-                                mode = state.orthographyMode,
-                                translationMode = state.translationMode,
-                                font = state.selectedFont,
-                                onC = onChapterSelected
-                            )
-                        }
-                        is ReaderItem.SectionHeader -> SectionHeaderItem(itm.section)
-                        is ReaderItem.BookHeader -> BookHeaderItem(itm.book, itm.bookOriginal, state.orthographyMode, state.translationMode, state.selectedFont) {}
-                        is ReaderItem.ChapterHeader -> ChapterHeaderItem(itm.chapter, state.translationMode, state.selectedFont) {}
-                        is ReaderItem.VerseTitle -> VerseTitleItem(itm.title, itm.translation, state.selectedFont)
-                        is ReaderItem.VerseLine -> {
-                            val isF = if (idx > 0) pagingItems[idx - 1] is ReaderItem.ChapterHeader || pagingItems[idx - 1] is ReaderItem.CompositeHeader else false
-                            val hlColor = state.highlightsMap[itm.verse.id]
-                            val onVerseSelectHandler = {
-                                val selStart = state.selectedVerseId
-                                if (selStart != null && selStart != itm.verse.id) {
-                                    val start = minOf(selStart, itm.verse.id)
-                                    val end = maxOf(selStart, itm.verse.id)
-                                    val spanned = (start..end).toList()
-                                    onVerseRangeSelected(start, end, spanned, "")
-                                } else {
-                                    onVerseSelected(itm.verse.id)
-                                }
+        LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 80.dp)) {
+            if (pagingItems.itemCount == 0) { item { Box(Modifier.fillParentMaxSize(), Alignment.Center) { Column(horizontalAlignment = Alignment.CenterHorizontally) { Text("Reading Pure Words..."); if (state.importProgress < 1f) { Text("Indexing: ${(state.importProgress * 100).toInt()}%", style = MaterialTheme.typography.labelSmall); Spacer(Modifier.height(16.dp)); LinearProgressIndicator(progress = { state.importProgress }, modifier = Modifier.width(200.dp)) } } } } }
+            items(pagingItems.itemCount, key = pagingItems.itemKey { itm -> when (itm) { is ReaderItem.SectionHeader -> "s_${itm.section}"; is ReaderItem.BookHeader -> "b_${itm.book}"; is ReaderItem.ChapterHeader -> "c_${itm.book}_${itm.chapter}"; is ReaderItem.VerseLine -> "v_${itm.verse.id}"; is ReaderItem.CompositeHeader -> "ch_${itm.section}_${itm.book}_${itm.chapter}"; is ReaderItem.VerseTitle -> "vt_${itm.title}_${itm.translation}" } }, contentType = pagingItems.itemContentType { it::class.java.simpleName }) { idx ->
+                val itm = pagingItems[idx] ?: return@items
+                when (itm) {
+                    is ReaderItem.CompositeHeader -> {
+                        val summary = chapterSummariesMap["${itm.book}_${itm.chapter}"]
+                        CompositeHeaderItem(
+                            itm = itm.copy(
+                                summary1611 = summary?.summary1611,
+                                titleEsv = summary?.titleEsv,
+                                titleStandard = summary?.titleStandard,
+                                sectionTitle = summary?.sectionTitle
+                            ),
+                            mode = state.orthographyMode,
+                            translationMode = state.translationMode,
+                            font = state.selectedFont,
+                            onC = onChapterSelected
+                        )
+                    }
+                    is ReaderItem.SectionHeader -> SectionHeaderItem(itm.section)
+                    is ReaderItem.BookHeader -> BookHeaderItem(itm.book, itm.bookOriginal, state.orthographyMode, state.translationMode, state.selectedFont) {}
+                    is ReaderItem.ChapterHeader -> ChapterHeaderItem(itm.chapter, state.translationMode, state.selectedFont) {}
+                    is ReaderItem.VerseTitle -> VerseTitleItem(itm.title, itm.translation, state.selectedFont)
+                    is ReaderItem.VerseLine -> {
+                        val isF = if (idx > 0) pagingItems[idx - 1] is ReaderItem.ChapterHeader || pagingItems[idx - 1] is ReaderItem.CompositeHeader else false
+                        val hlColor = state.highlightsMap[itm.verse.id]
+                        val onVerseSelectHandler = {
+                            val selStart = state.selectedVerseId
+                            if (selStart != null && selStart != itm.verse.id) {
+                                val start = minOf(selStart, itm.verse.id)
+                                val end = maxOf(selStart, itm.verse.id)
+                                val spanned = (start..end).toList()
+                                onVerseRangeSelected(start, end, spanned, "")
+                            } else {
+                                onVerseSelected(itm.verse.id)
                             }
-                            if (isF && state.query.isBlank()) DropCapVerseLine(itm.verse, state.orthographyMode, state.translationMode, state.highlightedVerseId == itm.verse.id, state.selectedVerseId == itm.verse.id, state.isOrthographyModernized, state.isLexiconEnabled, state.fontSize, state.selectedFont, hlColor, onVerseSelectHandler, onStrongsClick, onGlossaryClick, onWordClick)
-                            else VerseTextLine(itm.verse, state.orthographyMode, state.translationMode, state.highlightedVerseId == itm.verse.id, state.selectedVerseId == itm.verse.id, state.query.isNotBlank(), state.query, state.isOrthographyModernized, state.isLexiconEnabled, state.fontSize, state.selectedFont, hlColor, onVerseSelectHandler, onStrongsClick, onGlossaryClick, onWordClick)
                         }
+                        if (isF && state.query.isBlank()) DropCapVerseLine(itm.verse, state.orthographyMode, state.translationMode, state.highlightedVerseId == itm.verse.id, state.selectedVerseId == itm.verse.id, state.isOrthographyModernized, state.isLexiconEnabled, state.fontSize, state.selectedFont, hlColor, onVerseSelectHandler, onStrongsClick, onGlossaryClick, onWordClick)
+                        else VerseTextLine(itm.verse, state.orthographyMode, state.translationMode, state.highlightedVerseId == itm.verse.id, state.selectedVerseId == itm.verse.id, state.query.isNotBlank(), state.query, state.isOrthographyModernized, state.isLexiconEnabled, state.fontSize, state.selectedFont, hlColor, onVerseSelectHandler, onStrongsClick, onGlossaryClick, onWordClick)
                     }
                 }
             }
