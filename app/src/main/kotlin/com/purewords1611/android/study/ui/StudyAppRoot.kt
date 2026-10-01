@@ -43,6 +43,12 @@ import com.purewords1611.android.study.ui.components.MarginaliaDrawingView
 import java.util.Locale
 import kotlin.time.Duration.Companion.milliseconds
 import android.content.Intent
+import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.platform.LocalClipboardManager
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -133,7 +139,7 @@ fun StudyAppRoot(
                     Spacer(Modifier.height(16.dp))
                     Text("Pure Words 1611", Modifier.padding(16.dp), style = MaterialTheme.typography.titleLarge)
                     HorizontalDivider()
-                    
+
                     Text("Study Tools", Modifier.padding(16.dp), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                     NavigationDrawerItem(
                         label = { Text("My Notes & Highlights") },
@@ -158,13 +164,13 @@ fun StudyAppRoot(
                     Text("1611 Front Matter", Modifier.padding(16.dp), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                     allFrontMatter.forEach { item ->
                         NavigationDrawerItem(
-                            label = { Text(item.title, fontFamily = metadataFont) }, 
-                            selected = (uiState.currentDestination == RootDestination.FRONT_MATTER) && (selectedFrontMatter?.docId == item.docId), 
-                            onClick = { viewModel.selectFrontMatter(item.docId); viewModel.setDestination(RootDestination.FRONT_MATTER); scope.launch { drawerState.close() } }, 
+                            label = { Text(item.title, fontFamily = metadataFont) },
+                            selected = (uiState.currentDestination == RootDestination.FRONT_MATTER) && (selectedFrontMatter?.docId == item.docId),
+                            onClick = { viewModel.selectFrontMatter(item.docId); viewModel.setDestination(RootDestination.FRONT_MATTER); scope.launch { drawerState.close() } },
                             icon = { Icon(Icons.Default.Info, null) }
                         )
                     }
-                    
+
                     Spacer(Modifier.weight(1f))
                     HorizontalDivider()
                     NavigationDrawerItem(label = { Text("App Settings") }, selected = false, onClick = { showSettings = true; scope.launch { drawerState.close() } }, icon = { Icon(Icons.Default.Settings, null) })
@@ -181,7 +187,7 @@ fun StudyAppRoot(
                         Column {
                             TopAppBar(
                                 navigationIcon = { IconButton(onClick = { scope.launch { drawerState.open() } }) { Icon(Icons.Default.Menu, "Menu") } },
-                                title = { 
+                                title = {
                                     if (uiState.currentDestination != RootDestination.READ && uiState.currentDestination != RootDestination.PARALLEL) {
                                         Text(uiState.currentDestination.label)
                                     }
@@ -238,31 +244,31 @@ fun StudyAppRoot(
                                                 }
                                                 "$b $c"
                                             } ?: "Select Chapter"
-                                            
+
                                             Text(
-                                                text = title, 
-                                                maxLines = 3, 
+                                                text = title,
+                                                maxLines = 3,
                                                 fontFamily = metadataFont,
                                                 fontWeight = FontWeight.ExtraBold,
                                                 style = MaterialTheme.typography.titleMedium,
                                                 modifier = Modifier.weight(1f),
                                                 lineHeight = 22.sp
                                             )
-                                            
+
                                             Icon(Icons.Default.ArrowDropDown, null, modifier = Modifier.padding(start = 8.dp))
                                         }
-                                        
+
                                         if (uiState.currentDestination == RootDestination.READ) {
                                             Spacer(Modifier.width(16.dp))
                                             VerticalDivider(modifier = Modifier.height(32.dp))
                                             Spacer(Modifier.width(8.dp))
                                             if (uiState.isReadingChapter) {
-                                                IconButton(onClick = viewModel::stopReading) { 
-                                                    Icon(Icons.Default.Clear, "Stop", modifier = Modifier.size(32.dp), tint = MaterialTheme.colorScheme.error) 
+                                                IconButton(onClick = viewModel::stopReading) {
+                                                    Icon(Icons.Default.Clear, "Stop", modifier = Modifier.size(32.dp), tint = MaterialTheme.colorScheme.error)
                                                 }
                                             } else {
-                                                IconButton(onClick = { viewModel.readFullChapter() }) { 
-                                                    Icon(Icons.Default.PlayArrow, "Read", modifier = Modifier.size(32.dp), tint = MaterialTheme.colorScheme.primary) 
+                                                IconButton(onClick = { viewModel.readFullChapter() }) {
+                                                    Icon(Icons.Default.PlayArrow, "Read", modifier = Modifier.size(32.dp), tint = MaterialTheme.colorScheme.primary)
                                                 }
                                             }
                                         }
@@ -283,22 +289,22 @@ fun StudyAppRoot(
                         mainDestinations.forEach { item ->
                             NavigationBarItem(
                                 selected = uiState.currentDestination == item,
-                                onClick = { 
+                                onClick = {
                                     viewModel.setDestination(item)
-                                    viewModel.selectFrontMatter(null) 
+                                    viewModel.selectFrontMatter(null)
                                 },
                                 label = { Text(item.label) },
-                                icon = { 
+                                icon = {
                                     Icon(
-                                        imageVector = when(item) { 
+                                        imageVector = when(item) {
                                             RootDestination.HOME -> Icons.Default.Home
                                             RootDestination.READ -> Icons.AutoMirrored.Filled.List
                                             RootDestination.PARALLEL -> Icons.Default.ThumbUp
                                             RootDestination.SEARCH -> Icons.Default.Search
-                                            else -> Icons.Default.Info 
-                                        }, 
+                                            else -> Icons.Default.Info
+                                        },
                                         contentDescription = null
-                                    ) 
+                                    )
                                 }
                             )
                         }
@@ -313,10 +319,10 @@ fun StudyAppRoot(
                                 chapterSummaries.associateBy { "${it.book}_${it.chapter}" }
                             }
                             ReadScreen(
-                                state = uiState, 
-                                chapterSummariesMap = summaryMap, 
-                                pagingItems = pagingItems, 
-                                onVerseSelected = viewModel::selectVerse, 
+                                state = uiState,
+                                chapterSummariesMap = summaryMap,
+                                pagingItems = pagingItems,
+                                onVerseSelected = viewModel::selectVerse,
                                 onVerseRangeSelected = { start, end, spanned, text -> viewModel.selectVerseRange(start, end, spanned, text) },
                                 onStrongsClick = viewModel::selectStrongs,
                                 onGlossaryClick = { definition ->
@@ -328,17 +334,21 @@ fun StudyAppRoot(
                                     }
                                 },
                                 onWordClick = viewModel::selectPhrase,
-                                onChapterSelected = viewModel::selectChapter, 
-                                onScrollHandled = viewModel::onScrollToVerseHandled, 
+                                onChapterSelected = viewModel::selectChapter,
+                                onScrollHandled = viewModel::onScrollToVerseHandled,
                                 onUpdateActivePosition = viewModel::updateActivePositionFromScroll,
-                                onSaveMarginalia = viewModel::saveMarginalia
+                                onSaveMarginalia = viewModel::saveMarginalia,
+                                onToggleVerseSelection = viewModel::toggleVerseSelection,
+                                onClearVerseSelection = viewModel::clearAllSelections,
+                                onHighlightSelection = viewModel::toggleHighlightSelectionRange,
+                                onBookmarkSelection = viewModel::toggleBookmarkSelectionRange
                             )
                         }
                         RootDestination.PARALLEL -> {
                             ParallelScreen(
-                                state = uiState, 
-                                pagingItems = pagingItems, 
-                                onVerseSelected = viewModel::selectVerse, 
+                                state = uiState,
+                                pagingItems = pagingItems,
+                                onVerseSelected = viewModel::selectVerse,
                                 onUpdateActivePosition = viewModel::updateActivePositionFromScroll,
                                 onToggleLeft = viewModel::setTranslationMode,
                                 onToggleRight = viewModel::setComparisonTranslation
@@ -346,13 +356,13 @@ fun StudyAppRoot(
                         }
                         RootDestination.SEARCH -> {
                             SearchScreen(
-                                state = uiState, 
-                                pagingItems = pagingItems, 
+                                state = uiState,
+                                pagingItems = pagingItems,
                                 onQueryChange = viewModel::updateQuery,
                                 onSectionFilterChange = viewModel::setSearchFilterTestament,
-                                onVerseSelected = { b, c, id -> 
+                                onVerseSelected = { b, c, id ->
                                     viewModel.selectChapter(b, c, id)
-                                    viewModel.setDestination(RootDestination.READ) 
+                                    viewModel.setDestination(RootDestination.READ)
                                 }
                             )
                         }
@@ -473,7 +483,7 @@ fun StudyAppRoot(
                     LexiconEntrySheet(
                         entry = uiState.selectedLexiconEntry,
                         occurrenceCount = uiState.selectedStrongsOccurrenceCount,
-                        onSearch = { id -> 
+                        onSearch = { id ->
                             viewModel.updateQuery(id)
                             viewModel.setDestination(RootDestination.SEARCH)
                         },
@@ -493,7 +503,7 @@ private fun VersionToggle(mode: TranslationMode, onToggle: () -> Unit) {
         TranslationMode.KJV_STANDARD -> "Standard KJV"
         TranslationMode.ESV -> "Modern ESV"
     }
-    
+
     Surface(
         onClick = onToggle,
         shape = MaterialTheme.shapes.medium,
@@ -539,7 +549,7 @@ private fun HomeScreen(
 ) {
     val textFont = getFontFamily(state.selectedFont, state.translationMode)
     val metadataFont = if (state.translationMode == TranslationMode.KJV_1611) FontFamily.Serif else textFont
-    
+
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
         val g = remember {
             when (java.util.Calendar.getInstance()[java.util.Calendar.HOUR_OF_DAY]) {
@@ -549,7 +559,7 @@ private fun HomeScreen(
             }
         }
         Text(g, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Light)
-        
+
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Card(
                 modifier = Modifier.weight(1.5f),
@@ -573,11 +583,11 @@ private fun HomeScreen(
                     } else {
                         (state.lastReadPosition?.second ?: 1).toString()
                     }
-                    
+
                     Text("$bookLabel $chapterLabel", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, fontFamily = metadataFont)
                 }
             }
-            
+
             Card(
                 modifier = Modifier.weight(1f),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f))
@@ -609,11 +619,11 @@ private fun HomeScreen(
         LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             items(allFrontMatter) { item ->
                 Card(onClick = { onNavigateToFrontMatter(item.docId) }, modifier = Modifier.width(220.dp)) {
-                    Column(Modifier.padding(16.dp)) { 
+                    Column(Modifier.padding(16.dp)) {
                         Icon(Icons.Default.Info, null, tint = MaterialTheme.colorScheme.primary)
                         Spacer(Modifier.height(12.dp))
                         Text(item.title, style = MaterialTheme.typography.titleSmall.copy(fontFamily = metadataFont), maxLines = 2, overflow = TextOverflow.Ellipsis)
-                        Text("Historical Preface", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary) 
+                        Text("Historical Preface", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary)
                     }
                 }
             }
@@ -697,15 +707,15 @@ private fun StudySettingsSheet(
         )
         OrthographyToggle(state.orthographyMode, onO)
         ExplanationDepthToggle(state.explanationDepth, onE)
-        
+
         HorizontalDivider(Modifier.padding(vertical = 8.dp))
-        
+
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Default.Star, null, tint = MaterialTheme.colorScheme.secondary)
             Spacer(Modifier.width(12.dp))
             Text("Immersion", style = MaterialTheme.typography.titleMedium)
         }
-        
+
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f))
@@ -718,7 +728,7 @@ private fun StudySettingsSheet(
                     }
                     Switch(checked = state.isScriptoriumEnabled, onCheckedChange = { onTS() })
                 }
-                
+
                 if (state.isScriptoriumEnabled) {
                     Spacer(Modifier.height(16.dp))
                     Text("Atmosphere", style = MaterialTheme.typography.labelSmall)
@@ -760,7 +770,7 @@ private fun StudySettingsSheet(
                 Switch(checked = state.isLexiconEnabled, onCheckedChange = { onTL() })
             }
         }
-        
+
         HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -768,14 +778,14 @@ private fun StudySettingsSheet(
             Spacer(Modifier.width(12.dp))
             Text("Appearance", style = MaterialTheme.typography.titleMedium)
         }
-        
+
         ThemeToggle(state.themeMode, onTM)
         FontSelection(state.selectedFont, onF)
         Column {
             Text("Font Size: ${state.fontSize.toInt()}sp", style = MaterialTheme.typography.labelSmall)
             Slider(value = state.fontSize, onValueChange = onFS, valueRange = 12f..32f)
         }
-        
+
         HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -783,7 +793,7 @@ private fun StudySettingsSheet(
             Spacer(Modifier.width(12.dp))
             Text("Audio Settings", style = MaterialTheme.typography.titleMedium)
         }
-        
+
         Column {
             Text("Speech Rate: ${"%.2f".format(state.speechRate)}x", style = MaterialTheme.typography.labelSmall)
             Slider(value = state.speechRate, onValueChange = onSR, valueRange = 0.5f..2.0f)
@@ -839,10 +849,14 @@ private fun ReadScreen(
     onChapterSelected: (String, Int) -> Unit,
     onScrollHandled: () -> Unit,
     onUpdateActivePosition: (String, Int, Long?, Int?) -> Unit,
-    onSaveMarginalia: (List<DrawingPath>) -> Unit
+    onSaveMarginalia: (List<DrawingPath>) -> Unit,
+    onToggleVerseSelection: (Long) -> Unit,
+    onClearVerseSelection: () -> Unit,
+    onHighlightSelection: (String) -> Unit,
+    onBookmarkSelection: () -> Unit
 ) {
     val listState = rememberLazyListState()
-    
+
     val scriptoriumAlpha by animateFloatAsState(
         targetValue = if (state.isScriptoriumEnabled) 0.05f else 0f,
         animationSpec = infiniteRepeatable(
@@ -862,7 +876,7 @@ private fun ReadScreen(
                         val layoutInfo = listState.layoutInfo
                         val visibleItems = layoutInfo.visibleItemsInfo
                         val isVisible = visibleItems.any { it.index == i }
-                        
+
                         if (!isVisible) {
                             // Center the item in the viewport
                             val viewportHeight = layoutInfo.viewportSize.height
@@ -875,7 +889,7 @@ private fun ReadScreen(
         }
     }
 
-    LaunchedEffect(state.scrollToVerseId, state.scrollToIndex, pagingItems.itemCount, pagingItems.loadState.refresh) { 
+    LaunchedEffect(state.scrollToVerseId, state.scrollToIndex, pagingItems.itemCount, pagingItems.loadState.refresh) {
         state.scrollToIndex?.let { index ->
             if (pagingItems.itemCount > 0 && index in 0 until pagingItems.itemCount && pagingItems.loadState.refresh is LoadState.NotLoading) {
                 // Wait for data and UI to settle
@@ -886,7 +900,7 @@ private fun ReadScreen(
                 listState.scrollToItem(index, 0)
                 onScrollHandled()
             }
-        } ?: state.scrollToVerseId?.let { id -> 
+        } ?: state.scrollToVerseId?.let { id ->
             if (pagingItems.itemCount > 0 && pagingItems.loadState.refresh is LoadState.NotLoading) {
                 for (i in 0 until pagingItems.itemCount) {
                     val itm = pagingItems[i]
@@ -897,7 +911,7 @@ private fun ReadScreen(
                     }
                 }
             }
-        } 
+        }
     }
 
     LaunchedEffect(listState, pagingItems.loadState.refresh) {
@@ -961,19 +975,12 @@ private fun ReadScreen(
                     is ReaderItem.VerseLine -> {
                         val isF = if (idx > 0) pagingItems[idx - 1] is ReaderItem.ChapterHeader || pagingItems[idx - 1] is ReaderItem.CompositeHeader else false
                         val hlColor = state.highlightsMap[itm.verse.id]
+                        val isSelectedForAction = state.selectedVersesForAction.contains(itm.verse.id)
                         val onVerseSelectHandler = {
-                            val selStart = state.selectedVerseId
-                            if (selStart != null && selStart != itm.verse.id) {
-                                val start = minOf(selStart, itm.verse.id)
-                                val end = maxOf(selStart, itm.verse.id)
-                                val spanned = (start..end).toList()
-                                onVerseRangeSelected(start, end, spanned, "")
-                            } else {
-                                onVerseSelected(itm.verse.id)
-                            }
+                            onToggleVerseSelection(itm.verse.id)
                         }
-                        if (isF && state.query.isBlank()) DropCapVerseLine(itm.verse, state.orthographyMode, state.translationMode, state.highlightedVerseId == itm.verse.id, state.selectedVerseId == itm.verse.id, state.isOrthographyModernized, state.isLexiconEnabled, state.fontSize, state.selectedFont, hlColor, onVerseSelectHandler, onStrongsClick, onGlossaryClick, onWordClick)
-                        else VerseTextLine(itm.verse, state.orthographyMode, state.translationMode, state.highlightedVerseId == itm.verse.id, state.selectedVerseId == itm.verse.id, state.query.isNotBlank(), state.query, state.isOrthographyModernized, state.isLexiconEnabled, state.fontSize, state.selectedFont, hlColor, onVerseSelectHandler, onStrongsClick, onGlossaryClick, onWordClick)
+                        if (isF && state.query.isBlank()) DropCapVerseLine(itm.verse, state.orthographyMode, state.translationMode, state.highlightedVerseId == itm.verse.id, isSelectedForAction, state.isOrthographyModernized, state.isLexiconEnabled, state.fontSize, state.selectedFont, hlColor, onVerseSelectHandler, onStrongsClick, onGlossaryClick, onWordClick)
+                        else VerseTextLine(itm.verse, state.orthographyMode, state.translationMode, state.highlightedVerseId == itm.verse.id, isSelectedForAction, state.query.isNotBlank(), state.query, state.isOrthographyModernized, state.isLexiconEnabled, state.fontSize, state.selectedFont, hlColor, onVerseSelectHandler, onStrongsClick, onGlossaryClick, onWordClick)
                     }
                 }
             }
@@ -985,10 +992,133 @@ private fun ReadScreen(
                 onPathsChanged = onSaveMarginalia,
                 modifier = Modifier.fillMaxSize()
             )
-            
+
             Box(Modifier.align(Alignment.BottomEnd).padding(bottom = 100.dp, end = 16.dp)) {
                 SmallFloatingActionButton(onClick = { onSaveMarginalia(emptyList()) }) {
                     Icon(Icons.Default.Clear, "Clear Marginalia")
+                }
+            }
+        }
+
+        AnimatedVisibility(
+            visible = state.selectedVersesForAction.isNotEmpty(),
+            enter = slideInVertically(initialOffsetY = { it }),
+            exit = slideOutVertically(targetOffsetY = { it }),
+            modifier = Modifier.align(Alignment.BottomCenter)
+        ) {
+            ContextualActionBar(
+                state = state,
+                pagingItems = pagingItems,
+                onClear = onClearVerseSelection,
+                onHighlight = onHighlightSelection,
+                onBookmark = onBookmarkSelection
+            )
+        }
+    }
+}
+
+@Composable
+private fun ContextualActionBar(
+    state: StudyUiState,
+    pagingItems: LazyPagingItems<ReaderItem>,
+    onClear: () -> Unit,
+    onHighlight: (String) -> Unit,
+    onBookmark: () -> Unit
+) {
+    val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
+
+    val getSelectedText = {
+        val selectedVerses = (0 until pagingItems.itemCount)
+            .mapNotNull { pagingItems.peek(it) as? ReaderItem.VerseLine }
+            .filter { state.selectedVersesForAction.contains(it.verse.id) }
+            .sortedBy { it.verse.id }
+
+        selectedVerses.joinToString("\n") {
+            val text = if(state.translationMode == TranslationMode.KJV_1611) {
+                if (state.isOrthographyModernized) it.verse.modernizedText else it.verse.originalText
+            } else {
+                it.verse.modernizedText
+            }
+            "${it.verse.book} ${it.verse.chapter}:${it.verse.verse} - $text"
+        }
+    }
+
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+        shadowElevation = 8.dp,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onClear) {
+                    Icon(Icons.Default.Clear, contentDescription = "Clear Selection")
+                }
+
+                Text(
+                    text = "${state.selectedVersesForAction.size} Selected",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontFamily = FontFamily.Serif
+                )
+
+                Row {
+                    TextButton(onClick = {
+                        val text = getSelectedText()
+                        Log.d("ACTION_BAR_DEBUG", "COPY CALLED! Text length: ${text.length}")
+                        clipboardManager.setText(AnnotatedString(text))
+                        Log.d("ACTION_BAR_DEBUG", "setText success, calling onClear")
+                        onClear()
+                    }) {
+                        Text("COPY")
+                    }
+
+                    IconButton(onClick = {
+                        val text = getSelectedText()
+                        val sendIntent: Intent = Intent().apply {
+                            action = Intent.ACTION_SEND
+                            putExtra(Intent.EXTRA_TEXT, text)
+                            type = "text/plain"
+                        }
+                        val shareIntent = Intent.createChooser(sendIntent, null)
+                        context.startActivity(shareIntent)
+                        onClear()
+                    }) {
+                        Icon(Icons.Default.Share, contentDescription = "Share")
+                    }
+
+                    IconButton(onClick = {
+                        onBookmark()
+                        onClear()
+                    }) {
+                        Icon(Icons.Default.Star, contentDescription = "Bookmark")
+                    }
+                }
+            }
+
+            // Highlight Colors
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp, start = 16.dp, end = 16.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                val colors = listOf("yellow", "blue", "green", "pink", "purple")
+                colors.forEach { colorName ->
+                    val colorValue = getHighlightColor(colorName)
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(colorValue)
+                            .clickable {
+                                onHighlight(colorName)
+                                onClear()
+                            }
+                    )
                 }
             }
         }
@@ -1024,10 +1154,10 @@ private fun ParallelScreen(
         Surface(tonalElevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
             Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("Compare:", style = MaterialTheme.typography.labelLarge)
-                
+
                 FilterChip(
                     selected = state.translationMode == TranslationMode.KJV_1611 && state.comparisonTranslation == TranslationMode.KJV_STANDARD,
-                    onClick = { 
+                    onClick = {
                         onToggleLeft(TranslationMode.KJV_1611)
                         onToggleRight(TranslationMode.KJV_STANDARD)
                     },
@@ -1035,7 +1165,7 @@ private fun ParallelScreen(
                 )
                 FilterChip(
                     selected = state.translationMode == TranslationMode.KJV_1611 && state.comparisonTranslation == TranslationMode.ESV,
-                    onClick = { 
+                    onClick = {
                         onToggleLeft(TranslationMode.KJV_1611)
                         onToggleRight(TranslationMode.ESV)
                     },
@@ -1043,7 +1173,7 @@ private fun ParallelScreen(
                 )
                 FilterChip(
                     selected = state.translationMode == TranslationMode.KJV_STANDARD && state.comparisonTranslation == TranslationMode.ESV,
-                    onClick = { 
+                    onClick = {
                         onToggleLeft(TranslationMode.KJV_STANDARD)
                         onToggleRight(TranslationMode.ESV)
                     },
@@ -1051,7 +1181,7 @@ private fun ParallelScreen(
                 )
             }
         }
-        
+
         LazyColumn(state = listState, modifier = Modifier.weight(1f), contentPadding = PaddingValues(16.dp)) {
             items(pagingItems.itemCount) { idx ->
                 val itm = pagingItems[idx]
@@ -1080,7 +1210,7 @@ private fun ParallelScreen(
                                     TranslationMode.KJV_STANDARD -> itm.verse.standardText
                                     TranslationMode.ESV -> itm.verse.comparativeText
                                 } ?: ""
-                                
+
                                 Text(leftLabel, style = MaterialTheme.typography.labelExtraSmall, color = MaterialTheme.colorScheme.secondary)
                                 Text(
                                     text = leftText.ifBlank { "[Text not available]" },
@@ -1099,7 +1229,7 @@ private fun ParallelScreen(
                                     TranslationMode.KJV_STANDARD -> itm.verse.standardText
                                     TranslationMode.ESV -> itm.verse.comparativeText
                                 } ?: ""
-                                
+
                                 Text(rightLabel, style = MaterialTheme.typography.labelExtraSmall, color = MaterialTheme.colorScheme.tertiary)
                                 Text(
                                     text = rightText.ifBlank { "[Text not available]" },
@@ -1133,7 +1263,7 @@ private fun SearchScreen(
             leadingIcon = { Icon(Icons.Default.Search, null) },
             singleLine = true
         )
-        
+
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -1147,17 +1277,17 @@ private fun SearchScreen(
                 FilterChip(
                     selected = state.searchFilterTestament == section,
                     onClick = { onSectionFilterChange(section) },
-                    label = { 
+                    label = {
                         Text(when(section) {
                             TestamentSection.OLD_TESTAMENT -> "Old"
                             TestamentSection.APOCRYPHA -> "Apoc"
                             TestamentSection.NEW_TESTAMENT -> "New"
-                        }) 
+                        })
                     }
                 )
             }
         }
-        
+
         if (state.query.isBlank()) {
             Box(Modifier.fillMaxSize(), Alignment.Center) {
                 Text("Enter a search term or citation (e.g. Gen 1:1) to begin", style = MaterialTheme.typography.bodyLarge)
@@ -1204,7 +1334,7 @@ private fun SearchScreen(
                         )
                     }
                 }
-                
+
                 if (pagingItems.itemCount == 0 && !pagingItems.loadState.append.endOfPaginationReached) {
                     item {
                         Box(Modifier.fillMaxWidth().padding(32.dp), Alignment.Center) {
@@ -1243,7 +1373,7 @@ private fun SearchVerseResult(
     } else {
         v.chapter.toString()
     }
-    
+
     val legibleFont = if (translation == TranslationMode.KJV_1611) FontFamily.Serif else ff
 
     Column(
@@ -1265,7 +1395,7 @@ private fun SearchVerseResult(
             TranslationMode.KJV_STANDARD -> v.standardText ?: v.modernizedText
             TranslationMode.KJV_1611 -> if (mode == OrthographyMode.ORIGINAL_1611) v.originalText else v.modernizedText
         }
-        
+
         val snippet = if (query.startsWith("\"") && query.endsWith("\"") && query.length > 2) {
             val phrase = query.substring(1, query.length - 1)
             val index = txt.indexOf(phrase, ignoreCase = true)
@@ -1291,7 +1421,7 @@ private fun SearchVerseResult(
 private fun CompositeHeaderItem(itm: ReaderItem.CompositeHeader, mode: OrthographyMode, translationMode: TranslationMode, font: StudyFont, onC: (String, Int) -> Unit) {
     val ff = getFontFamily(font, translationMode)
     val legibleFont = if (translationMode == TranslationMode.KJV_1611) FontFamily.Serif else ff
-    
+
     Column(Modifier.fillMaxWidth().padding(bottom = 32.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         itm.section?.let { SectionHeaderItem(it) }
 
@@ -1311,27 +1441,27 @@ private fun CompositeHeaderItem(itm: ReaderItem.CompositeHeader, mode: Orthograp
             )
             HorizontalDivider(Modifier.width(100.dp), thickness = 1.dp)
         }
-        
+
         if (itm.showBookHeader && itm.book != null) {
             val t = if (translationMode == TranslationMode.KJV_1611 && mode == OrthographyMode.ORIGINAL_1611) {
                 itm.bookOriginal ?: itm.book
             } else {
                 itm.book
             }
-            
+
             val shouldShowShortTitle = itm.sectionTitle == null || translationMode != TranslationMode.KJV_1611
-            
+
             if (shouldShowShortTitle) {
                 Text(
-                    text = t, 
+                    text = t,
                     style = MaterialTheme.typography.displayLarge.copy(
-                        fontWeight = FontWeight.Bold, 
-                        fontSize = legibilityAdjustedFontSize(64, translationMode), 
-                        lineHeight = 72.sp, 
+                        fontWeight = FontWeight.Bold,
+                        fontSize = legibilityAdjustedFontSize(64, translationMode),
+                        lineHeight = 72.sp,
                         fontFamily = legibleFont,
                         letterSpacing = (-1).sp
-                    ), 
-                    textAlign = TextAlign.Center, 
+                    ),
+                    textAlign = TextAlign.Center,
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 64.dp)
                 )
             } else {
@@ -1350,19 +1480,19 @@ private fun CompositeHeaderItem(itm: ReaderItem.CompositeHeader, mode: Orthograp
                 TranslationMode.KJV_STANDARD -> itm.titleStandard
                 else -> null
             }
-            
-            Column(Modifier.fillMaxWidth().clickable { onC(itm.book, itm.chapter) }.padding(vertical = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) { 
+
+            Column(Modifier.fillMaxWidth().clickable { onC(itm.book, itm.chapter) }.padding(vertical = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 HorizontalDivider(Modifier.width(48.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = d, 
+                        text = d,
                         style = MaterialTheme.typography.titleLarge.copy(
-                            fontStyle = if (translationMode == TranslationMode.KJV_1611) FontStyle.Normal else FontStyle.Italic, 
-                            letterSpacing = 1.sp, 
+                            fontStyle = if (translationMode == TranslationMode.KJV_1611) FontStyle.Normal else FontStyle.Italic,
+                            letterSpacing = 1.sp,
                             fontFamily = legibleFont,
                             fontWeight = if (translationMode == TranslationMode.KJV_1611) FontWeight.Bold else FontWeight.Normal
-                        ), 
-                        modifier = Modifier.padding(top = 16.dp), 
+                        ),
+                        modifier = Modifier.padding(top = 16.dp),
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     if (title != null) {
@@ -1370,12 +1500,12 @@ private fun CompositeHeaderItem(itm: ReaderItem.CompositeHeader, mode: Orthograp
                         Text(title, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold, fontFamily = legibleFont), modifier = Modifier.padding(top = 16.dp), color = MaterialTheme.colorScheme.onSurface)
                     }
                 }
-                
+
                 if (translationMode == TranslationMode.KJV_1611 && itm.summary1611 != null) {
                     Text(
                         text = itm.summary1611,
                         style = MaterialTheme.typography.bodyLarge.copy(
-                            fontStyle = FontStyle.Italic, 
+                            fontStyle = FontStyle.Italic,
                             fontFamily = legibleFont,
                             lineHeight = 24.sp
                         ),
@@ -1413,62 +1543,62 @@ private fun VerseTitleItem(title: String, translation: TranslationMode, font: St
     }
 }
 
-@Composable private fun SectionHeaderItem(s: TestamentSection) { 
-    val t = when (s) { 
+@Composable private fun SectionHeaderItem(s: TestamentSection) {
+    val t = when (s) {
         TestamentSection.OLD_TESTAMENT -> "THE OLD TESTAMENT"
         TestamentSection.APOCRYPHA -> "THE APOCRYPHA"
-        TestamentSection.NEW_TESTAMENT -> "THE NEW TESTAMENT" 
-    }; 
+        TestamentSection.NEW_TESTAMENT -> "THE NEW TESTAMENT"
+    };
     Column(
-        modifier = Modifier.fillMaxWidth().padding(top = 80.dp, bottom = 48.dp), 
+        modifier = Modifier.fillMaxWidth().padding(top = 80.dp, bottom = 48.dp),
         horizontalAlignment = Alignment.CenterHorizontally
-    ) { 
+    ) {
         HorizontalDivider(Modifier.width(120.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f))
         Spacer(Modifier.height(32.dp))
         Text(
-            text = t, 
+            text = t,
             style = MaterialTheme.typography.displaySmall.copy(
-                fontWeight = FontWeight.ExtraLight, 
-                letterSpacing = 8.sp, 
+                fontWeight = FontWeight.ExtraLight,
+                letterSpacing = 8.sp,
                 fontSize = 24.sp,
-                fontFamily = FontFamily.Serif 
-            ), 
-            color = MaterialTheme.colorScheme.onSurface, 
+                fontFamily = FontFamily.Serif
+            ),
+            color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center
         )
         Spacer(Modifier.height(32.dp))
-        HorizontalDivider(Modifier.width(120.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)) 
-    } 
+        HorizontalDivider(Modifier.width(120.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f))
+    }
 }
-@Composable private fun BookHeaderItem(b: String, bo: String?, m: OrthographyMode, t: TranslationMode, font: StudyFont, onClick: () -> Unit) { 
-    val d = if (t == TranslationMode.KJV_1611 && m == OrthographyMode.ORIGINAL_1611) bo ?: b else b; 
+@Composable private fun BookHeaderItem(b: String, bo: String?, m: OrthographyMode, t: TranslationMode, font: StudyFont, onClick: () -> Unit) {
+    val d = if (t == TranslationMode.KJV_1611 && m == OrthographyMode.ORIGINAL_1611) bo ?: b else b;
     val ff = getFontFamily(font, t)
     val bookFont = if (t == TranslationMode.KJV_1611) FontFamily.Serif else ff
-    Surface(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick), color = Color.Transparent) { 
-        Text(d, style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold, fontSize = 48.sp, fontFamily = bookFont), modifier = Modifier.padding(horizontal = 24.dp, vertical = 48.dp), textAlign = TextAlign.Center) 
-    } 
+    Surface(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick), color = Color.Transparent) {
+        Text(d, style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold, fontSize = 48.sp, fontFamily = bookFont), modifier = Modifier.padding(horizontal = 24.dp, vertical = 48.dp), textAlign = TextAlign.Center)
+    }
 }
-@Composable private fun ChapterHeaderItem(c: Int, t: TranslationMode, font: StudyFont, onClick: () -> Unit) { 
-    val d = if (t == TranslationMode.KJV_1611) "CHAP. ${toRomanNumeral(c)}." else "Chapter $c"; 
+@Composable private fun ChapterHeaderItem(c: Int, t: TranslationMode, font: StudyFont, onClick: () -> Unit) {
+    val d = if (t == TranslationMode.KJV_1611) "CHAP. ${toRomanNumeral(c)}." else "Chapter $c";
     val ff = getFontFamily(font, t)
     val legibleFont = if (t == TranslationMode.KJV_1611) FontFamily.Serif else ff
-    Column(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 32.dp), horizontalAlignment = Alignment.CenterHorizontally) { 
-        HorizontalDivider(Modifier.width(48.dp)); 
-        Text(d, style = MaterialTheme.typography.titleLarge.copy(fontStyle = FontStyle.Italic, letterSpacing = 2.sp, fontFamily = legibleFont), modifier = Modifier.padding(top = 16.dp), color = MaterialTheme.colorScheme.onSurface) 
-    } 
+    Column(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 32.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        HorizontalDivider(Modifier.width(48.dp));
+        Text(d, style = MaterialTheme.typography.titleLarge.copy(fontStyle = FontStyle.Italic, letterSpacing = 2.sp, fontFamily = legibleFont), modifier = Modifier.padding(top = 16.dp), color = MaterialTheme.colorScheme.onSurface)
+    }
 }
-@Composable private fun VerseTextLine(v: VerseText, m: OrthographyMode, t: TranslationMode, iH: Boolean, iS: Boolean, iSM: Boolean, q: String, isOM: Boolean, isL: Boolean, fs: Float, f: StudyFont, hlColor: String? = null, onClick: () -> Unit, onS: (String) -> Unit, onG: (String) -> Unit, onW: (String?) -> Unit) { 
+@Composable private fun VerseTextLine(v: VerseText, m: OrthographyMode, t: TranslationMode, iH: Boolean, iS: Boolean, iSM: Boolean, q: String, isOM: Boolean, isL: Boolean, fs: Float, f: StudyFont, hlColor: String? = null, onClick: () -> Unit, onS: (String) -> Unit, onG: (String) -> Unit, onW: (String?) -> Unit) {
     val rowBg = if (hlColor != null) getHighlightColor(hlColor).copy(alpha = 0.35f) else if (iH) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f) else if (iS) MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f) else Color.Transparent
-    Row(Modifier.fillMaxWidth().clickable(onClick = onClick).background(rowBg).padding(horizontal = 16.dp, vertical = 8.dp)) { 
+    Row(Modifier.fillMaxWidth().clickable(onClick = onClick).background(rowBg).padding(horizontal = 16.dp, vertical = 8.dp)) {
         Text(v.verse.toString(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, modifier = Modifier.width(24.dp).padding(top = 4.dp))
-        Column(Modifier.weight(1f)) { 
+        Column(Modifier.weight(1f)) {
             if (iSM) {
                 val b = if (t == TranslationMode.KJV_1611 && m == OrthographyMode.ORIGINAL_1611) v.bookOriginal ?: v.book else v.book
                 val c = if (t == TranslationMode.KJV_1611 && m == OrthographyMode.ORIGINAL_1611) toRomanNumeral(v.chapter) else v.chapter.toString()
                 val legibleFont = if (t == TranslationMode.KJV_1611) FontFamily.Serif else getFontFamily(f, t)
                 Text("$b $c", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary, modifier = Modifier.padding(bottom = 2.dp), fontFamily = legibleFont)
             }
-            
+
             val annotatedTxt = if (isL && v.strongsText != null && t == TranslationMode.KJV_1611 && m == OrthographyMode.ORIGINAL_1611) {
                 parseStrongsText(v.strongsText, showTags = false)
             } else {
@@ -1486,7 +1616,7 @@ private fun VerseTitleItem(title: String, translation: TranslationMode, font: St
                     highlightSearchQuery(txt, q)
                 }
             }
-            
+
             ClickableText(
                 text = annotatedTxt,
                 style = MaterialTheme.typography.bodyLarge.copy(
@@ -1509,14 +1639,14 @@ private fun VerseTitleItem(title: String, translation: TranslationMode, font: St
                     }
                 }
             )
-        } 
-    } 
+        }
+    }
 }
-@Composable private fun DropCapVerseLine(v: VerseText, m: OrthographyMode, t: TranslationMode, iH: Boolean, iS: Boolean, isOM: Boolean, isL: Boolean, fs: Float, f: StudyFont, hlColor: String? = null, onClick: () -> Unit, onS: (String) -> Unit, onG: (String) -> Unit, onW: (String?) -> Unit) { 
+@Composable private fun DropCapVerseLine(v: VerseText, m: OrthographyMode, t: TranslationMode, iH: Boolean, iS: Boolean, isOM: Boolean, isL: Boolean, fs: Float, f: StudyFont, hlColor: String? = null, onClick: () -> Unit, onS: (String) -> Unit, onG: (String) -> Unit, onW: (String?) -> Unit) {
     val rowBg = if (hlColor != null) getHighlightColor(hlColor).copy(alpha = 0.35f) else if (iH) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f) else if (iS) MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f) else Color.Transparent
-    Row(Modifier.fillMaxWidth().clickable(onClick = onClick).background(rowBg).padding(horizontal = 16.dp, vertical = 12.dp)) { 
+    Row(Modifier.fillMaxWidth().clickable(onClick = onClick).background(rowBg).padding(horizontal = 16.dp, vertical = 12.dp)) {
         Text(v.verse.toString(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, modifier = Modifier.width(24.dp).padding(top = 8.dp))
-        
+
         val annotatedTxt = if (isL && v.strongsText != null && t == TranslationMode.KJV_1611 && m == OrthographyMode.ORIGINAL_1611) {
             parseStrongsText(v.strongsText, showTags = false)
         } else {
@@ -1534,10 +1664,10 @@ private fun VerseTitleItem(title: String, translation: TranslationMode, font: St
                 parseItalicText(txt)
             }
         }
-        
-        if (annotatedTxt.isNotEmpty()) { 
+
+        if (annotatedTxt.isNotEmpty()) {
             val dc = annotatedTxt.text.take(1); val rem = annotatedTxt.subSequence(1, annotatedTxt.length)
-            Row(Modifier.weight(1f)) { 
+            Row(Modifier.weight(1f)) {
                 Text(dc, style = MaterialTheme.typography.displayLarge.copy(fontSize = (fs * 2.5).sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, fontFamily = getFontFamily(f, t)), modifier = Modifier.padding(end = 4.dp))
                 ClickableText(
                     text = rem,
@@ -1562,9 +1692,9 @@ private fun VerseTitleItem(title: String, translation: TranslationMode, font: St
                         }
                     }
                 )
-            } 
-        } 
-    } 
+            }
+        }
+    }
 }
 
 private val KJV_FONT_FAMILY = FontFamily(Font(R.font.kjva6aa))
@@ -1594,13 +1724,13 @@ private fun highlightSearchQuery(t: String, q: String): AnnotatedString {
         append(base)
         val lowerText = base.text.lowercase(Locale.ROOT)
         val trimmedQuery = q.trim()
-        
+
         val terms = if (trimmedQuery.startsWith("\"") && trimmedQuery.endsWith("\"") && trimmedQuery.length > 2) {
             listOf(trimmedQuery.substring(1, trimmedQuery.length - 1).lowercase(Locale.ROOT))
         } else {
             q.lowercase(Locale.ROOT).split("\\s+".toRegex()).filter { it.length > 2 }
         }
-        
+
         terms.forEach { term ->
             var start = lowerText.indexOf(term)
             while (start >= 0) {
@@ -1797,7 +1927,7 @@ private fun StudyHubSheet(
                 leadingIcon = { Icon(Icons.Default.Share, null, Modifier.size(16.dp)) }
             )
             AssistChip(
-                onClick = { 
+                onClick = {
                     val translationName = when(s.translationMode) {
                         TranslationMode.KJV_1611 -> "KJV 1611"
                         TranslationMode.KJV_STANDARD -> "Standard KJV"
@@ -1809,7 +1939,7 @@ private fun StudyHubSheet(
                         "${s.activeChapter?.book} ${s.activeChapter?.chapter}"
                     }
                     val text = "📜 \"${s.selectedVerseDisplayText}\"\n— $citation ($translationName)\n\nStudy the Pure Words 1611 Bible App."
-                    onSh(text) 
+                    onSh(text)
                 },
                 label = { Text("Share Text") },
                 leadingIcon = { Icon(Icons.Default.Share, null, Modifier.size(16.dp)) }
@@ -1818,14 +1948,14 @@ private fun StudyHubSheet(
         var noteText by remember { mutableStateOf("") }
         var selectedTag by remember { mutableStateOf<String?>(null) }
         val tags = listOf("Personal", "Theological", "Historical", "Prophetic")
-        
+
         OutlinedTextField(
             value = noteText,
             onValueChange = { noteText = it },
             label = { Text("Personal Note") },
             modifier = Modifier.fillMaxWidth()
         )
-        
+
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(vertical = 4.dp)) {
             items(tags) { tag ->
                 FilterChip(
@@ -1835,7 +1965,7 @@ private fun StudyHubSheet(
                 )
             }
         }
-        
+
         Button(
             onClick = {
                 onN(noteText, selectedTag)
@@ -1846,7 +1976,7 @@ private fun StudyHubSheet(
         ) {
             Text("Save Note")
         }
-        
+
         if (s.selectedVerseGlossary.isNotEmpty()) {
             HorizontalDivider()
             Text("Glossary (False Friends)", style = MaterialTheme.typography.titleMedium)
@@ -1958,7 +2088,7 @@ private fun NotesScreen(
         item {
             Text("Study Dashboard", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.height(16.dp))
-            
+
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Card(Modifier.weight(1f)) {
                     Column(Modifier.padding(16.dp)) {
@@ -2019,7 +2149,7 @@ private fun NotesScreen(
             }
         }
         item { Text("Personal Notes", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary) }
-        items(personalNotes) { note -> 
+        items(personalNotes) { note ->
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
@@ -2027,13 +2157,13 @@ private fun NotesScreen(
                 Column(Modifier.padding(12.dp)) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text("Verse ID: ${note.verseId}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary)
-                        note.category?.let { 
+                        note.category?.let {
                             Text(
-                                it, 
-                                style = MaterialTheme.typography.labelExtraSmall.copy(fontWeight = FontWeight.Bold), 
+                                it,
+                                style = MaterialTheme.typography.labelExtraSmall.copy(fontWeight = FontWeight.Bold),
                                 color = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f), MaterialTheme.shapes.extraSmall).padding(horizontal = 4.dp, vertical = 2.dp)
-                            ) 
+                            )
                         }
                     }
                     Spacer(Modifier.height(4.dp))
@@ -2088,9 +2218,9 @@ private fun SeekerPathScreen(ts: List<SeekerTrackEntry>, aId: String?, ss: List<
                     }
                     Box(modifier = Modifier.width(2.dp).height(80.dp).background(MaterialTheme.colorScheme.outlineVariant))
                 }
-                
+
                 Spacer(Modifier.width(12.dp))
-                
+
                 Card(
                     modifier = Modifier.weight(1f),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
@@ -2157,7 +2287,7 @@ private fun GalleryScreen(metadataFont: FontFamily, onSelect: (String) -> Unit) 
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
         )
         Spacer(Modifier.height(32.dp))
-        
+
         visuals.forEach { visual ->
             Card(
                 onClick = { onSelect(visual.id) },
@@ -2207,7 +2337,7 @@ private fun GalleryScreen(metadataFont: FontFamily, onSelect: (String) -> Unit) 
                 }
             }
         }
-        
+
         Spacer(Modifier.height(32.dp))
         Text(
             "Historical Context",
@@ -2263,7 +2393,7 @@ private fun VisualDetailScreen(
         "woodcuts" -> "Ornate Woodcuts"
         else -> "Visual Detail"
     }
-    
+
     val description = when(id) {
         "genealogies" -> "Speed's 'Genealogies of the Holy Scriptures' were included in the first 1611 edition to help readers trace the lineage from Adam to Christ."
         "maps" -> "Early 17th-century cartography of the Holy Land, providing a spatial context for the biblical narrative."
@@ -2360,7 +2490,7 @@ fun ZoomableImage(
                 ),
             contentScale = ContentScale.Fit
         )
-        
+
         if (scale > 1f) {
             Box(
                 modifier = Modifier
@@ -2394,7 +2524,7 @@ private fun parseStrongsText(t: String, showTags: Boolean = false): AnnotatedStr
         if (textPart != null) {
             val start = length
             append(textPart)
-            
+
             val trimmed = textPart.trimEnd()
             if (trimmed.isNotEmpty()) {
                 val lastSpace = trimmed.lastIndexOf(' ')
@@ -2467,7 +2597,7 @@ private fun LexiconEntrySheet(
                     fontStyle = FontStyle.Italic
                 )
             }
-            
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -2478,7 +2608,7 @@ private fun LexiconEntrySheet(
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.tertiary
                 )
-                
+
                 Surface(
                     color = MaterialTheme.colorScheme.secondaryContainer,
                     shape = CircleShape
@@ -2491,15 +2621,15 @@ private fun LexiconEntrySheet(
                     )
                 }
             }
-            
+
             HorizontalDivider()
-            
+
             Text(
                 text = entry.definition.ifEmpty { "No definition available." },
                 style = MaterialTheme.typography.bodyLarge,
                 lineHeight = 24.sp
             )
-            
+
             if (entry.info?.isNotEmpty() == true) {
                 Card(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
@@ -2511,9 +2641,9 @@ private fun LexiconEntrySheet(
                     )
                 }
             }
-            
+
             Button(
-                onClick = { 
+                onClick = {
                     onSearch(entry.strongsId)
                     onClose()
                 },
@@ -2524,7 +2654,7 @@ private fun LexiconEntrySheet(
                 Spacer(Modifier.width(8.dp))
                 Text("Search all occurrences in Bible")
             }
-            
+
             Spacer(Modifier.height(32.dp))
         }
     }
@@ -2564,13 +2694,13 @@ private fun FacsimileOverlay(state: StudyUiState, onDismiss: () -> Unit) {
                     Icon(Icons.Default.Close, null, tint = Color.White)
                 }
             }
-            
+
             Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                 ZoomableImage(
                     resourceId = R.drawable.bible_title_1611,
                     contentDescription = "1611 Facsimile"
                 )
-                
+
                 Surface(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
@@ -2586,7 +2716,7 @@ private fun FacsimileOverlay(state: StudyUiState, onDismiss: () -> Unit) {
                     )
                 }
             }
-            
+
             Text(
                 "Pinch to zoom. Tap background to return to Study Mode.",
                 modifier = Modifier

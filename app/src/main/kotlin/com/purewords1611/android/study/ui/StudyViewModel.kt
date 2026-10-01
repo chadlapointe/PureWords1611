@@ -12,6 +12,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import android.content.*
 import android.os.IBinder
+import android.util.Log
 import com.purewords1611.android.study.service.BibleAudioService
 import javax.inject.Inject
 import kotlinx.coroutines.*
@@ -72,6 +73,7 @@ data class StudyUiState(
     val bookmarkedVerseIdsSet: Set<Long> = emptySet(),
     val marginaliaList: List<MarginaliaEntity> = emptyList(),
     val activeSelectionRange: SelectionRange? = null,
+    val selectedVersesForAction: Set<Long> = emptySet(),
 )
 
 data class SelectionRange(
@@ -158,7 +160,7 @@ class StudyViewModel @Inject constructor(
                 translationMode,
                 searchFilterTestament,
             ) { q: String, key: Int?, titles: List<VerseTitleEntity>, tMode: TranslationMode, section: TestamentSection? ->
-                
+
                 fun isBookFirstInSection(book: String): Boolean {
                     return (book == "Genesis") || (book == "1 Esdras") || (book == "Matthew")
                 }
@@ -184,9 +186,9 @@ class StudyViewModel @Inject constructor(
                                     showBookHeader = isBookStart,
                                 )
                             } else if (bv == null) {
-                                // We jumped to a mid-chapter verse. 
+                                // We jumped to a mid-chapter verse.
                                 // Show a small chapter indicator or nothing?
-                                // For now, let's show the full header if it's the very top of our view 
+                                // For now, let's show the full header if it's the very top of our view
                                 // so the user knows where they are.
                                 ReaderItem.CompositeHeader(
                                     chapter = av.chapter,
@@ -194,16 +196,16 @@ class StudyViewModel @Inject constructor(
                                     showBookHeader = false,
                                 )
                             } else null
-    
+
                             // 2. Check for Verse Titles
-                            val titleEntity = titles.find { 
-                                it.book == av.book && 
-                                it.chapter == av.chapter && 
-                                it.verse == av.verse && 
-                                it.translation == tMode.name 
+                            val titleEntity = titles.find {
+                                it.book == av.book &&
+                                it.chapter == av.chapter &&
+                                it.verse == av.verse &&
+                                it.translation == tMode.name
                             }
-                            
-                            separator ?: titleEntity?.let { 
+
+                            separator ?: titleEntity?.let {
                                 ReaderItem.VerseTitle(it.title, tMode)
                             }
                         }
@@ -241,11 +243,11 @@ class StudyViewModel @Inject constructor(
     val chapterIndex = repository.isReady.flatMapLatest { ready ->
         if (!ready) flowOf(emptyList()) else repository.observeChapterIndex()
     }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
-    
+
     private val chapterIndexMap = chapterIndex.map { list ->
         list.associateBy { "${it.book}_${it.chapter}" }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
-    
+
     val allFrontMatter = repository.isReady.flatMapLatest { ready ->
         if (!ready) flowOf(emptyList()) else repository.observeAllFrontMatter()
     }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
@@ -253,11 +255,11 @@ class StudyViewModel @Inject constructor(
     val bookmarks = repository.isReady.flatMapLatest { ready ->
         if (!ready) flowOf(emptyList()) else repository.observeBookmarks()
     }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
-        
+
     val personalNotes = repository.isReady.flatMapLatest { ready ->
         if (!ready) flowOf(emptyList()) else repository.observePersonalNotes()
     }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
-        
+
     val highlights = repository.isReady.flatMapLatest { ready ->
         if (!ready) flowOf(emptyList()) else repository.observeHighlights()
     }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
@@ -283,8 +285,8 @@ class StudyViewModel @Inject constructor(
     private val allVerseTitles = repository.observeAllVerseTitles()
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-    val seekerSteps = activeSeekerTrackId.flatMapLatest { 
-        it?.let { repository.observeSeekerSteps(it) } ?: flowOf(emptyList()) 
+    val seekerSteps = activeSeekerTrackId.flatMapLatest {
+        it?.let { repository.observeSeekerSteps(it) } ?: flowOf(emptyList())
     }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val activeMarginalia = activeChapter.flatMapLatest { ch ->
@@ -302,15 +304,15 @@ class StudyViewModel @Inject constructor(
         else flow { emit(repository.getStrongsOccurrenceCount(id)) }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, 0)
 
-    val selectedFrontMatter = selectedFrontMatterDocId.flatMapLatest { 
-        it?.let { repository.observeFrontMatter(it) } ?: flowOf(null) 
+    val selectedFrontMatter = selectedFrontMatterDocId.flatMapLatest {
+        it?.let { repository.observeFrontMatter(it) } ?: flowOf(null)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     private val parsedCitations = query.debounce(500.milliseconds).flatMapLatest { q ->
         if (q.isBlank()) flowOf(emptyList())
         else flow {
             val citations = BibleCitationParser.parse(q)
-            val verses = citations.mapNotNull { 
+            val verses = citations.mapNotNull {
                 repository.getChapterVerses(it.book, it.chapter).find { v -> v.verse == it.verse }
             }
             emit(verses)
@@ -318,6 +320,20 @@ class StudyViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     private val activeSelectionRange = MutableStateFlow<SelectionRange?>(null)
+    private val selectedVersesForAction = MutableStateFlow<Set<Long>>(emptySet())
+
+    fun toggleVerseSelection(verseId: Long) {
+        val current = selectedVersesForAction.value
+        if (current.contains(verseId)) {
+            selectedVersesForAction.value = current - verseId
+        } else {
+            selectedVersesForAction.value = current + verseId
+        }
+    }
+
+    fun clearVerseSelection() {
+        selectedVersesForAction.value = emptySet()
+    }
 
     fun selectVerseRange(startVerseId: Long, endVerseId: Long, spannedVerseIds: List<Long>, text: String = "") {
         activeSelectionRange.value = SelectionRange(
@@ -332,17 +348,33 @@ class StudyViewModel @Inject constructor(
         activeSelectionRange.value = null
     }
 
+    fun clearAllSelections() {
+        Log.d("ACTION_BAR_DEBUG", "clearAllSelections CALLED!")
+        activeSelectionRange.value = null
+        selectedVersesForAction.value = emptySet()
+    }
+
     fun toggleHighlightSelectionRange(colorName: String) {
-        val range = activeSelectionRange.value ?: return
+        val activeRange = activeSelectionRange.value
+        val multiSelect = selectedVersesForAction.value
         viewModelScope.launch {
-            repository.toggleHighlightRange(range.spannedVerseIds, colorName)
+            if (activeRange != null) {
+                repository.toggleHighlightRange(activeRange.spannedVerseIds, colorName)
+            } else if (multiSelect.isNotEmpty()) {
+                repository.toggleHighlightRange(multiSelect.toList(), colorName)
+            }
         }
     }
 
     fun toggleBookmarkSelectionRange() {
-        val range = activeSelectionRange.value ?: return
+        val activeRange = activeSelectionRange.value
+        val multiSelect = selectedVersesForAction.value
         viewModelScope.launch {
-            repository.toggleBookmarkRange(range.spannedVerseIds)
+            if (activeRange != null) {
+                repository.toggleBookmarkRange(activeRange.spannedVerseIds)
+            } else if (multiSelect.isNotEmpty()) {
+                repository.toggleBookmarkRange(multiSelect.toList())
+            }
         }
     }
 
@@ -392,6 +424,7 @@ class StudyViewModel @Inject constructor(
                 bookmarkedVerseIdsFlow,
                 allMarginalia,
                 activeSelectionRange,
+                selectedVersesForAction,
             ) { args ->
                 StudyUiState(
                     orthographyMode = args[0] as OrthographyMode,
@@ -438,6 +471,7 @@ class StudyViewModel @Inject constructor(
                     bookmarkedVerseIdsSet = args[40] as Set<Long>,
                     marginaliaList = args[41] as List<MarginaliaEntity>,
                     activeSelectionRange = args[42] as SelectionRange?,
+                    selectedVersesForAction = args[43] as Set<Long>,
                     dailyReadingLesson = calculateDailyLesson(),
                     speechRate = audioService?.getSpeechRate() ?: 1.0f,
                     availableVoices = audioService?.getAvailableVoices() ?: emptyList(),
@@ -465,7 +499,7 @@ class StudyViewModel @Inject constructor(
     }
 
     override fun onCleared() { super.onCleared(); if (isBound) context.unbindService(connection) }
-    
+
     fun toggleFacsimileMode() {
         isFacsimileMode.value = !isFacsimileMode.value
     }
@@ -489,15 +523,15 @@ class StudyViewModel @Inject constructor(
             repository.toggleHighlight(verseId, colorName)
         }
     }
-    fun updateQuery(v: String) { 
-        query.value = v 
+    fun updateQuery(v: String) {
+        query.value = v
         if (v.isNotBlank() && currentDestination.value != RootDestination.READ) {
             currentDestination.value = RootDestination.SEARCH
         }
     }
-    fun setOrthographyMode(m: OrthographyMode) { 
+    fun setOrthographyMode(m: OrthographyMode) {
         pagingInitialKey.value = lastRecordedPosition
-        orthographyMode.value = m 
+        orthographyMode.value = m
         audioService?.onVersionChanged(m, translationMode.value)
     }
     fun setTranslationMode(t: TranslationMode) {
@@ -505,7 +539,7 @@ class StudyViewModel @Inject constructor(
         translationMode.value = t
         audioService?.onVersionChanged(orthographyMode.value, t)
     }
-    fun toggleTranslationMode() { 
+    fun toggleTranslationMode() {
         pagingInitialKey.value = lastRecordedPosition
         translationMode.value = when (translationMode.value) {
             TranslationMode.KJV_1611 -> TranslationMode.KJV_STANDARD
@@ -528,19 +562,19 @@ class StudyViewModel @Inject constructor(
         selectedSoundscape.value = s
         ambientSoundPlayer.setSoundscape(s)
     }
-    fun selectVerse(id: Long) { 
+    fun selectVerse(id: Long) {
         android.util.Log.d("StudyViewModel", "selectVerse: $id")
-        selectedVerseId.value = id 
+        selectedVerseId.value = id
     }
-    fun clearSelectedVerse() { 
+    fun clearSelectedVerse() {
         selectedVerseId.value = null
         selectedPhrase.value = null
     }
-    fun selectChapter(b: String, c: Int, vId: Long? = null, verseNumber: Int? = null) { 
-        viewModelScope.launch { 
+    fun selectChapter(b: String, c: Int, vId: Long? = null, verseNumber: Int? = null) {
+        viewModelScope.launch {
             val ch = chapterIndexMap.value["${b}_$c"]
             var targetVerseNumber = verseNumber
-            
+
             if (targetVerseNumber == null && vId != null) {
                 // Resolve vId to verse number
                 repository.getVerse(vId)?.let { targetVerseNumber = it.verse }
@@ -558,17 +592,17 @@ class StudyViewModel @Inject constructor(
                 scrollToIndex.value = if (vn > 1) 1 else 0
                 activeChapter.value = chapterIndexMap.value["${b}_$c"]
             }
-        } 
+        }
     }
-    fun onScrollToVerseHandled() { 
+    fun onScrollToVerseHandled() {
         scrollToVerseId.value = null
         scrollToIndex.value = null
     }
-    fun updateActivePositionFromScroll(b: String, c: Int, vId: Long?, verseNumber: Int? = null) { 
-        if ((activeChapter.value?.book != b) || (activeChapter.value?.chapter != c)) { 
+    fun updateActivePositionFromScroll(b: String, c: Int, vId: Long?, verseNumber: Int? = null) {
+        if ((activeChapter.value?.book != b) || (activeChapter.value?.chapter != c)) {
             activeChapter.value = chapterIndexMap.value["${b}_$c"]
         }
-        
+
         val ch = chapterIndexMap.value["${b}_$c"]
         if (ch != null && verseNumber != null) {
             lastRecordedPosition = ch.position + (verseNumber - 1)
@@ -589,40 +623,40 @@ class StudyViewModel @Inject constructor(
     fun addBookmarkForSelectedVerse() { selectedVerseId.value?.let { toggleBookmark(it) } }
     fun savePersonalNoteForSelectedVerse(n: String, c: String? = null) { n.trim().takeIf { it.isNotBlank() }?.let { note -> selectedVerseId.value?.let { viewModelScope.launch { repository.savePersonalNote(it, note, c) } } } }
     fun addHighlightForSelectedVerse(c: String = "Yellow") { selectedVerseId.value?.let { toggleHighlight(it, c) } }
-    fun readFullChapter(startId: Long? = null) { 
-        viewModelScope.launch { 
+    fun readFullChapter(startId: Long? = null) {
+        viewModelScope.launch {
             val ch = activeChapter.value ?: return@launch
             val v = repository.getChapterVerses(ch.book, ch.chapter)
             if (v.isEmpty()) return@launch
             val actualStartId = startId ?: uiState.value.lastReadVerseId.takeIf { lastId -> v.any { it.id == lastId } }
-            audioService?.playQueue(v, actualStartId, orthographyMode.value, translationMode.value) 
-        } 
+            audioService?.playQueue(v, actualStartId, orthographyMode.value, translationMode.value)
+        }
     }
     fun speakSelectedVerse() { selectedVerseId.value?.let { id -> viewModelScope.launch { repository.getVerse(id)?.let { audioService?.playQueue(listOf(it), it.id, orthographyMode.value, translationMode.value) } } } }
     fun stopReading() { context.startService(Intent(context, BibleAudioService::class.java).apply { action = BibleAudioService.ACTION_PAUSE }) }
-    fun setSpeechRate(r: Float) { 
-        audioService?.setSpeechRate(r) 
+    fun setSpeechRate(r: Float) {
+        audioService?.setSpeechRate(r)
         viewModelScope.launch { repository.saveSpeechRate(r) }
     }
-    fun setVoice(v: String) { 
-        audioService?.setVoice(v) 
+    fun setVoice(v: String) {
+        audioService?.setVoice(v)
         viewModelScope.launch { repository.saveSelectedVoice(v) }
     }
     fun setFontSize(s: Float) { fontSize.value = s }
     fun setSelectedFont(f: StudyFont) { selectedFont.value = f }
     fun setThemeMode(m: StudyThemeMode) { themeMode.value = m }
-    fun setDestination(d: RootDestination) { 
+    fun setDestination(d: RootDestination) {
         android.util.Log.d("StudyViewModel", "setDestination: $d")
-        currentDestination.value = d 
+        currentDestination.value = d
     }
     fun selectFrontMatter(id: String?) { selectedFrontMatterDocId.value = id }
     fun setSearchFilterTestament(s: TestamentSection?) { searchFilterTestament.value = s }
     fun toggleOrthographyModernization() { isOrthographyModernized.value = !isOrthographyModernized.value }
     fun toggleLexicon() { isLexiconEnabled.value = !isLexiconEnabled.value }
-    fun togglePencil() { 
+    fun togglePencil() {
         val newVal = !isPencilEnabled.value
         android.util.Log.d("StudyViewModel", "togglePencil: $newVal")
-        isPencilEnabled.value = newVal 
+        isPencilEnabled.value = newVal
     }
     fun selectPhrase(p: String?) {
         selectedPhrase.value = p
@@ -678,7 +712,7 @@ class StudyViewModel @Inject constructor(
         val calendar = java.util.Calendar.getInstance()
         val month = calendar[java.util.Calendar.MONTH] + 1
         val day = calendar[java.util.Calendar.DAY_OF_MONTH]
-        
+
         // Very simplified placeholder for 1611 Calendar of Lessons
         // Real implementation would load from JSON
         return when(month) {

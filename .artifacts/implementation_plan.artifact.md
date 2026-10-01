@@ -1,43 +1,38 @@
-# Implementation Plan - Fix False Friends, Compare Screen, and Highlighting
+# Modern Bible App UX / Action Bar Refactoring
 
-This plan addresses several issues and feature requests for the PureWords1611 app, including fixing False Friend interaction/styling, investigating the Compare Screen "Text not available" bug, and planning for word-level highlighting.
+To make the verse selection, highlighting, sharing, and copying feel fluid and comparable to top-tier Bible apps like YouVersion, we will decouple the "Study click" (for Glossary/Strongs) from the "Verse select" click.
 
-## User Review Required
-
-> [!IMPORTANT]
-> - **Highlighting Color**: Changing False Friend highlight color from Wine Red to Deep Purple (`0xFF673AB7`) as requested.
-> - **Highlighting Scope**: The current database model supports verse-level highlighting. Implementing word-level highlighting would require a schema change. I will start with fixing verse-level interaction first.
-> - **Compare Screen Bug**: I suspect a book name mismatch between the 1611 base DB and the KJV/ESV JSON assets. I will add logging and a normalization step.
+## Goal
+Implement a single-tap-to-select verse flow that activates a Contextual Action Bar anchored to the bottom of the screen, supporting multi-selection and actions (Copy, Share, Bookmark, Highlight).
 
 ## Proposed Changes
 
-### [Component] Study UI
+### `StudyViewModel.kt`
+- Add a new state flow: `val selectedVersesForAction = MutableStateFlow<Set<Long>>(emptySet())`
+- Add intent methods: `fun toggleVerseSelection(verseId: Long)`, `fun clearVerseSelection()`
+- Remove single-verse `selectedVerseId` logic (or adapt it to handle multi-select).
 
-#### [MODIFY] [FalseFriendGlossary.kt](file:///C:/Users/chadl/AndroidStudioProjects/PureWords1611/app/src/main/kotlin/com/purewords1611/android/study/ui/FalseFriendGlossary.kt)
-- Change `highlightColor` default value to `Color(0xFF673AB7)` (Deep Purple).
+### `StudyAppRoot.kt` (UI Layer)
+- Modify `VerseTextLine` and `DropCapVerseLine` modifiers to detect standard clicks to toggle `selectedVersesForAction`.
+- Remove the `onClick` passthrough from the `ClickableText` (which was causing gesture interference). The `ClickableText` should ONLY fire for `onS` (Strongs) and `onG` (Glossary).
+- **Contextual Action Bar Component:** Add an `AnimatedVisibility` block inside `ReadScreen` (anchored to the bottom) that appears when `selectedVersesForAction` is not empty.
+- The Action Bar will have buttons for:
+  - Copy (copies selected verses text)
+  - Share (triggers standard Android share sheet with verse text)
+  - Bookmark (bookmarks selected verses)
+  - Color Picker (highlight selected verses with 1611-themed colors)
+  - Clear (X button to dismiss selection)
 
-#### [MODIFY] [StudyAppRoot.kt](file:///C:/Users/chadl/AndroidStudioProjects/PureWords1611/app/src/main/kotlin/com/purewords1611/android/study/ui/StudyAppRoot.kt)
-- Update `VerseTextLine` and `DropCapVerseLine` to handle `GLOSSARY` annotations in `ClickableText`.
-- Show a snackbar or tooltip with the False Friend definition when clicked.
+### Theming / "1611" Aesthetic
+- The Contextual Action Bar will have a dark, sleek design with classical iconography.
+- Highlight colors will use classic names/hexes (e.g., Ochre, Tyrian, Verdigris).
 
-### [Component] Data Initialization
-
-#### [MODIFY] [ManualDatabaseInitializer.kt](file:///C:/Users/chadl/AndroidStudioProjects/PureWords1611/app/src/main/kotlin/com/purewords1611/android/study/data/local/ManualDatabaseInitializer.kt)
-- Add book name normalization in `populateAlternateTexts` to ensure 1611 book names match KJV/ESV JSON keys (e.g., handling "1 Samuel" vs "I Samuel" or similar).
-- Add more robust logging to track how many verses are updated.
-
-### [Component] Features & Improvements
-
-- **KJV vs ESV Comparison**: Add a new comparison mode in `ParallelScreen` to allow comparing Standard KJV directly with Modern ESV.
-- **Improved Tools Idea**: Add a "Word Study" tool that allows selecting any word and searching it across the entire Bible with Lexicon integration.
+## Open Questions
+- Do we want long-press to activate the Lexicon instead of standard click, so regular click can be strictly for selection? Or should the text only be selectable via tapping the *row background* instead of the text itself?
+  > For this plan, we will route *all unannotated text clicks* back up to the Row to toggle verse selection.
 
 ## Verification Plan
-
-### Automated Tests
-- N/A (UI and Data Init changes are hard to test without full DB setup, will rely on manual verification via logs and UI inspection).
-
-### Manual Verification
-- Deploy the app and navigate to the Study screen.
-- Verify False Friends are highlighted in purple and clickable.
-- Verify the Compare screen shows actual text for KJV/ESV.
-- Verify the new KJV vs ESV comparison mode.
+- Deploy to emulator.
+- Tap a verse; it should highlight and display the Bottom Action Bar.
+- Tap a glossary term; it should still open the Glossary bottom sheet.
+- Test Copy and Share intents.

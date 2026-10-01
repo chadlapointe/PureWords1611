@@ -4,74 +4,71 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
+import java.util.Locale
 
 object FalseFriendGlossary {
-    // Expanded set of 1611 false friends with clearer differentiation
+    // 1611 KJV false friends with accurate historical meanings vs modern usage
+    // Note: Contronyms (words that meant two opposite things, like 'let' meaning 'allow' AND 'hinder')
+    // and highly context-dependent words (like 'save' or 'suffer') have been removed to prevent
+    // wildly incorrect highlighting in common contexts.
     private val falseFriends = mapOf(
-        // Existing terms with modern vs 1611 meaning
-        "conversation" to "1611: Conduct/behavior | Modern: Chat",
-        "prevent" to "1611: To go before | Modern: Stop beforehand",
-        "allow" to "1611: Approve | Modern: Permit",
-        "careful" to "1611: Anxious | Modern: Cautious",
-        "charity" to "1611: Brotherly love | Modern: Almsgiving",
-        "halt" to "1611: Limp | Modern: Stop",
-        "let" to "1611: Hinder | Modern: Allow",
-        "nephews" to "1611: Descendants | Modern: Grandsons",
-        "peculiar" to "1611: One's own | Modern: Unique",
-        "quick" to "1611: Living | Modern: Fast",
-        "suffer" to "1611: Permit | Modern: Endure",
-        
-        // Additional historical terms
-        "advent" to "1611: Arrival | Modern: Christmas season",
-        "answer" to "1611: Give thought | Modern: Reply",
-        "beast" to "1611: Animal | Modern: Fierce creature",
-        "bless" to "1611: Consecrate | Modern: Divine favor",
-        "body" to "1611: Corpse | Modern: Physical form",
-        "chamber" to "1611: Bedroom | Modern: Room",
-        "child" to "1611: Offspring | Modern: Minor person",
-        "company" to "1611: Attendance | Modern: Business",
-        "deceit" to "1611: Disguise | Modern: Fraud",
-        "degree" to "1611: Rank | Modern: Academic title",
-        "desire" to "1611: Craving | Modern: Wish",
-        "dispute" to "1611: Contend | Modern: Argue",
-        "elder" to "1611: Senior | Modern: Church official",
-        "end" to "1611: Purpose | Modern: Conclusion",
-        "flesh" to "1611: Human nature | Modern: Meat",
-        "fornication" to "1611: Immorality | Modern: Premarital sex",
-        "fruit" to "1611: Result | Modern: Plant produce",
-        "gift" to "1611: Charisma | Modern: Present",
-        "grace" to "1611: Divine favor | Modern: Elegance",
-        "heathen" to "1611: Pagan | Modern: Non-Christian",
-        "holy" to "1611: Set apart | Modern: Pious",
-        "knowledge" to "1611: Wisdom | Modern: Information",
-        "light" to "1611: Mild | Modern: Not heavy",
-        "meek" to "1611: Gentle | Modern: Timid",
-        "mourn" to "1611: Lament | Modern: Mourn",
-        "number" to "1611: Rank | Modern: Quantity",
-        "offence" to "1611: Blasphemy | Modern: Insult",
-        "old" to "1611: Mature | Modern: Aged",
-        "perfect" to "1611: Complete | Modern: Flawless",
-        "perfectly" to "1611: Entirely | Modern: Totally",
-        "picture" to "1611: Image | Modern: Painting",
-        "poor" to "1611: Needy | Modern: Destitute",
-        "port" to "1611: Harbor | Modern: Port city",
-        "precious" to "1611: Priceless | Modern: Valuable",
-        "purchase" to "1611: Obtain | Modern: Buy",
-        "reprove" to "1611: Convince | Modern: Scold",
-        "righteous" to "1611: Just | Modern: Moral",
-        "saint" to "1611: Holy person | Modern: Canonized",
-        "salt" to "1611: Preservative | Modern: Condiment",
-        "save" to "1611: Rescue | Modern: Store",
-        "scripture" to "1611: Sacred text | Modern: Bible",
-        "seed" to "1611: Descendants | Modern: Plant part",
-        "sight" to "1611: Vision | Modern: Visual perception",
-        "sin" to "1611: Transgression | Modern: Immorality",
-        "tongue" to "1611: Language | Modern: Oral organ",
-        "word" to "1611: Message | Modern: Vocabulary",
-        "world" to "1611: Age | Modern: Planet"
+        "allow" to "1611: Approve or commend | Modern: Permit",
+        "allows" to "1611: Approves or commends | Modern: Permits",
+        "allowed" to "1611: Approved or commended | Modern: Permitted",
+        "alloweth" to "1611: Approves or commends | Modern: Permits",
+        "artillery" to "1611: Bows, arrows, or missile weapons | Modern: Heavy mounted guns or cannons",
+        "bottle" to "1611: Leather wineskin or pouch | Modern: Glass or plastic container",
+        "bottles" to "1611: Leather wineskins or pouches | Modern: Glass or plastic containers",
+        "careful" to "1611: Full of anxiety or worry | Modern: Cautious or taking care",
+        "charity" to "1611: Benevolent Christian love | Modern: Almsgiving or organization",
+        "closet" to "1611: Private inner chamber | Modern: Storage wardrobe for clothes",
+        "conversation" to "1611: Manner of life or conduct | Modern: Verbal chat or dialogue",
+        "corn" to "1611: Grain in general (wheat, barley) | Modern: Maize or corn on the cob",
+        "cunning" to "1611: Skillful or expert | Modern: Sly or deceitful",
+        "curious" to "1611: Skillfully wrought or intricate | Modern: Inquisitive or strange",
+        "discover" to "1611: Uncover, lay bare, or reveal | Modern: Find something unknown",
+        "discovereth" to "1611: Uncovers, lays bare, or reveals | Modern: Finds something unknown",
+        "doctor" to "1611: Teacher or scholar of religious law | Modern: Medical physician",
+        "doctors" to "1611: Teachers or scholars of religious law | Modern: Medical physicians",
+        "halt" to "1611: Limp or lame | Modern: Stop moving",
+        "honest" to "1611: Honorable, respectable, or decent | Modern: Truthful or non-deceitful",
+        "instantly" to "1611: Urgently or earnestly | Modern: Immediately or without delay",
+        "leasing" to "1611: Lying or falsehood | Modern: Renting property under contract",
+        "lust" to "1611: Strong desire or pleasure in general | Modern: Sexual desire",
+        "meat" to "1611: Any solid food in general | Modern: Animal flesh",
+        "meats" to "1611: Any solid foods in general | Modern: Animal flesh",
+        "naughty" to "1611: Worthless, corrupt, or bad | Modern: Disobedient or mischievous",
+        "nephew" to "1611: Grandson or descendant | Modern: Son of a sibling",
+        "nephews" to "1611: Grandsons or descendants | Modern: Sons of a sibling",
+        "offence" to "1611: Stumbling block or cause for falling | Modern: Insult or transgression",
+        "offences" to "1611: Stumbling blocks or causes for falling | Modern: Insults or transgressions",
+        "passion" to "1611: Suffering or endurance of pain | Modern: Intense emotion or enthusiasm",
+        "peculiar" to "1611: One's own special possession | Modern: Strange, odd, or unusual",
+        "perfect" to "1611: Complete, mature, or fully developed | Modern: Flawless or without error",
+        "picture" to "1611: Carved image, relief, or representation | Modern: Photograph or painting",
+        "pictures" to "1611: Carved images, reliefs, or representations | Modern: Photographs or paintings",
+        "port" to "1611: Gate or doorway | Modern: Harbor or port city",
+        "prevent" to "1611: Go before or precede | Modern: Stop or hinder beforehand",
+        "prevented" to "1611: Went before or preceded | Modern: Stopped or hindered beforehand",
+        "preventeth" to "1611: Goes before or precedes | Modern: Stops or hinders beforehand",
+        "provoke" to "1611: Stir up, motivate, or inspire | Modern: Annoy or irritate",
+        "publican" to "1611: Tax collector for Rome | Modern: Owner or manager of a pub",
+        "publicans" to "1611: Tax collectors for Rome | Modern: Owners or managers of pubs",
+        "purchase" to "1611: Acquire, obtain, or gain | Modern: Buy with money",
+        "quick" to "1611: Living or alive | Modern: Fast or swift",
+        "quicken" to "1611: Make alive or impart life | Modern: Speed up or accelerate",
+        "quickened" to "1611: Made alive or imparted life | Modern: Sped up or accelerated",
+        "reprove" to "1611: Convict, expose, or refute | Modern: Scold or reprimand",
+        "scrip" to "1611: Wallet, satchel, or small bag | Modern: Paper certificate or token",
+        "strange" to "1611: Foreign or alien | Modern: Odd or unusual",
+        "vex" to "1611: Afflict, harass, or oppress | Modern: Annoy or bother",
+        "vexed" to "1611: Afflicted, harassed, or oppressed | Modern: Annoyed or bothered",
+        "virtue" to "1611: Power, strength, or efficacy | Modern: Moral goodness or chastity",
+        "wist" to "1611: Knew or understood | Modern: Obsolete (past tense of wit)",
+        "wot" to "1611: Know or aware of | Modern: Obsolete (present tense of wit)"
     )
 
     fun highlightFalseFriends(text: String, highlightColor: Color = Color(0xFF673AB7)): AnnotatedString {
@@ -84,7 +81,7 @@ object FalseFriendGlossary {
                     withStyle(style = SpanStyle(
                         color = highlightColor,
                         fontWeight = FontWeight.Bold,
-                        textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline
+                        textDecoration = TextDecoration.Underline
                     )) {
                         append(component)
                     }
@@ -98,7 +95,7 @@ object FalseFriendGlossary {
 
     fun getFalseFriends(text: String): Map<String, String> {
         val found = mutableMapOf<String, String>()
-        val words = text.lowercase(java.util.Locale.ROOT).split(Regex("\\W+"))
+        val words = text.lowercase(Locale.ROOT).split(Regex("\\W+"))
         words.forEach { word ->
             val cleanWord = word.trim().filter { it.isLetter() }
             if (falseFriends.containsKey(cleanWord)) {
