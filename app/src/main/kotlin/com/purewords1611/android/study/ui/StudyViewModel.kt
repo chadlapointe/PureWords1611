@@ -11,6 +11,7 @@ import com.purewords1611.android.study.service.PdfExportManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import android.content.*
+import android.os.IBinder
 import com.purewords1611.android.study.service.BibleAudioService
 import javax.inject.Inject
 import kotlinx.coroutines.*
