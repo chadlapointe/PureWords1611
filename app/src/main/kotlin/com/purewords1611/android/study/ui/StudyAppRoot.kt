@@ -1032,7 +1032,6 @@ private fun ContextualActionBar(
         val selectedVerses = (0 until pagingItems.itemCount)
             .mapNotNull { pagingItems.peek(it) as? ReaderItem.VerseLine }
             .filter { state.selectedVersesForAction.contains(it.verse.id) }
-            .sortedBy { it.verse.id }
 
         selectedVerses.joinToString("\n") {
             val text = if(state.translationMode == TranslationMode.KJV_1611) {
@@ -1070,9 +1069,7 @@ private fun ContextualActionBar(
                 Row {
                     TextButton(onClick = {
                         val text = getSelectedText()
-                        Log.d("ACTION_BAR_DEBUG", "COPY CALLED! Text length: ${text.length}")
                         clipboardManager.setText(AnnotatedString(text))
-                        Log.d("ACTION_BAR_DEBUG", "setText success, calling onClear")
                         onClear()
                     }) {
                         Text("COPY")

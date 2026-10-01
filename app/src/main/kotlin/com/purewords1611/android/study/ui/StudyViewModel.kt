@@ -11,8 +11,6 @@ import com.purewords1611.android.study.service.PdfExportManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import android.content.*
-import android.os.IBinder
-import android.util.Log
 import com.purewords1611.android.study.service.BibleAudioService
 import javax.inject.Inject
 import kotlinx.coroutines.*
@@ -349,32 +347,35 @@ class StudyViewModel @Inject constructor(
     }
 
     fun clearAllSelections() {
-        Log.d("ACTION_BAR_DEBUG", "clearAllSelections CALLED!")
         activeSelectionRange.value = null
         selectedVersesForAction.value = emptySet()
     }
 
-    fun toggleHighlightSelectionRange(colorName: String) {
-        val activeRange = activeSelectionRange.value
+    internal fun resolveActionVerseIds(): List<Long> {
         val multiSelect = selectedVersesForAction.value
+        if (multiSelect.isNotEmpty()) {
+            return multiSelect.toList()
+        }
+        val activeRange = activeSelectionRange.value
+        if (activeRange != null) {
+            return activeRange.spannedVerseIds
+        }
+        return emptyList()
+    }
+
+    fun toggleHighlightSelectionRange(colorName: String) {
+        val ids = resolveActionVerseIds()
+        if (ids.isEmpty()) return
         viewModelScope.launch {
-            if (activeRange != null) {
-                repository.toggleHighlightRange(activeRange.spannedVerseIds, colorName)
-            } else if (multiSelect.isNotEmpty()) {
-                repository.toggleHighlightRange(multiSelect.toList(), colorName)
-            }
+            repository.toggleHighlightRange(ids, colorName)
         }
     }
 
     fun toggleBookmarkSelectionRange() {
-        val activeRange = activeSelectionRange.value
-        val multiSelect = selectedVersesForAction.value
+        val ids = resolveActionVerseIds()
+        if (ids.isEmpty()) return
         viewModelScope.launch {
-            if (activeRange != null) {
-                repository.toggleBookmarkRange(activeRange.spannedVerseIds)
-            } else if (multiSelect.isNotEmpty()) {
-                repository.toggleBookmarkRange(multiSelect.toList())
-            }
+            repository.toggleBookmarkRange(ids)
         }
     }
 
