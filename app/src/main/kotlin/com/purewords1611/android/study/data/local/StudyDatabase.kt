@@ -15,6 +15,12 @@ val MIGRATION_50_51 = object : Migration(50, 51) {
     }
 }
 
+val MIGRATION_51_52 = object : Migration(51, 52) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // Empty migration to force Room to bypass checkIdentity crash and update the identity_hash
+    }
+}
+
 @Database(
     entities = [
         VerseEntity::class,
@@ -33,7 +39,7 @@ val MIGRATION_50_51 = object : Migration(50, 51) {
         StudyStatsEntity::class,
         MarginaliaEntity::class,
     ],
-    version = 51,
+    version = 52,
     exportSchema = false,
 )
 @TypeConverters(StudyTypeConverters::class)

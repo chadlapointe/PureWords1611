@@ -29,7 +29,7 @@ object StudyDatabaseModule {
             StudyDatabase::class.java,
             dbName,
         )
-            .addMigrations(MIGRATION_50_51)
+            .addMigrations(MIGRATION_50_51, MIGRATION_51_52)
             .fallbackToDestructiveMigration(dropAllTables = true)
             .build()
     }
