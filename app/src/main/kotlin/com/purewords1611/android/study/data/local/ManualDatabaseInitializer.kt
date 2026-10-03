@@ -20,7 +20,7 @@ class ManualDatabaseInitializer @Inject constructor(
     private val dbName = "pure_words_study.db"
     private val assetName = "database/full_1611_bible.db"
     private val dbVersion = 51
-    private val identityHash = "b898f5b4176a2e64a70551e0de00e6eb"
+    private val identityHash = "41155a4a32f8f6b174ca1a7b6dba71c9"
     private val mutex = Mutex()
     private val tag = "ManualDbInit_v51"
 
