@@ -10,4 +10,10 @@ class DatabaseMigrationTest {
         assertEquals(50, MIGRATION_50_51.startVersion)
         assertEquals(51, MIGRATION_50_51.endVersion)
     }
+
+    @Test
+    fun testMigration51To52SQL() {
+        assertEquals(51, MIGRATION_51_52.startVersion)
+        assertEquals(52, MIGRATION_51_52.endVersion)
+    }
 }

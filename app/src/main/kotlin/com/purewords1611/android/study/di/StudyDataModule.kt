@@ -30,7 +30,7 @@ object StudyDatabaseModule {
             dbName,
         )
             .addMigrations(MIGRATION_50_51, MIGRATION_51_52)
-            .fallbackToDestructiveMigration(dropAllTables = true)
+            // Removed destructive fallback to let initializer restore data
             .build()
     }
 

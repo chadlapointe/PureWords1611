@@ -19,8 +19,12 @@ class ManualDatabaseInitializer @Inject constructor(
 ) {
     private val dbName = "pure_words_study.db"
     private val assetName = "database/full_1611_bible.db"
-    private val dbVersion = 52
-    private val identityHash = "b898f5b4176a2e64a70551e0de00e6eb"
+    companion object {
+        const val EXPECTED_IDENTITY_HASH = "b898f5b4176a2e64a70551e0de00e6eb"
+        const val DB_VERSION = 52
+    }
+    private val dbVersion = DB_VERSION
+    private val identityHash = EXPECTED_IDENTITY_HASH
     private val mutex = Mutex()
     private val tag = "ManualDbInit_v52"
 
@@ -34,12 +38,20 @@ class ManualDatabaseInitializer @Inject constructor(
 
         if ((currentVersion < dbVersion) || (currentHash != identityHash) || (verseCount == 0)) {
             android.util.Log.i(tag, "Database needs re-initialization (version, hash mismatch, or empty verses table: $verseCount)")
+            val backupFile = File("${dbFile.absolutePath}.userbackup")
             if (dbFile.exists()) {
+                SQLiteDatabase.openDatabase(dbFile.absolutePath, null, SQLiteDatabase.OPEN_READWRITE).use { db ->
+                    db.execSQL("PRAGMA wal_checkpoint(TRUNCATE)")
+                }
+                dbFile.copyTo(backupFile, overwrite = true)
                 deleteDatabaseFiles(dbFile)
             }
             dbFile.parentFile?.mkdirs()
             copyAsset(dbFile)
             fixSchema(dbFile)
+            if (backupFile.exists()) {
+                restoreUserData(dbFile, backupFile)
+            }
             seedInitialSummaries(dbFile)
             seedInitialTitles(dbFile)
             populateAlternateTexts(dbFile)
@@ -60,6 +72,54 @@ class ManualDatabaseInitializer @Inject constructor(
             android.util.Log.i(tag, "Database already initialized and healthy for version $dbVersion")
         }
         databaseStateHolder.setReady()
+    }
+
+    private fun restoreUserData(newDbFile: File, backupFile: File) {
+        val userTables = listOf("bookmarks", "highlights", "personal_notes", "chapter_completions", "reading_preferences", "study_stats", "marginalia")
+        SQLiteDatabase.openDatabase(newDbFile.absolutePath, null, SQLiteDatabase.OPEN_READWRITE).use { db ->
+            db.execSQL("ATTACH DATABASE '${backupFile.absolutePath}' AS backup_db")
+            db.beginTransaction()
+            try {
+                for (table in userTables) {
+                    val cursor = db.rawQuery("SELECT name FROM backup_db.sqlite_master WHERE type='table' AND name='$table'", null)
+                    val exists = cursor.moveToFirst()
+                    cursor.close()
+                    if (!exists) continue
+
+                    val newCols = mutableListOf<String>()
+                    db.rawQuery("PRAGMA table_info($table)", null).use { c ->
+                        while (c.moveToNext()) { newCols.add(c.getString(1)) }
+                    }
+                    val oldCols = mutableListOf<String>()
+                    db.rawQuery("PRAGMA backup_db.table_info($table)", null).use { c ->
+                        while (c.moveToNext()) { oldCols.add(c.getString(1)) }
+                    }
+                    val commonCols = newCols.intersect(oldCols.toSet()).joinToString(",") { "`$it`" }
+                    if (commonCols.isNotEmpty()) {
+                        db.execSQL("INSERT OR REPLACE INTO `$table` ($commonCols) SELECT $commonCols FROM backup_db.`$table`")
+                        val countCursor = db.rawQuery("SELECT changes()", null)
+                        val count = if (countCursor.moveToFirst()) countCursor.getInt(0) else 0
+                        countCursor.close()
+                        android.util.Log.i(tag, "Restored $count rows into $table")
+                    }
+                }
+
+                // Cleanup orphaned references across all user tables referencing verses
+                db.execSQL("DELETE FROM bookmarks WHERE verseId NOT IN (SELECT id FROM verses)")
+                db.execSQL("DELETE FROM highlights WHERE verseId NOT IN (SELECT id FROM verses)")
+                db.execSQL("DELETE FROM personal_notes WHERE verseId NOT IN (SELECT id FROM verses)")
+
+                db.setTransactionSuccessful()
+            } catch (e: Exception) {
+                android.util.Log.e(tag, "Error restoring user data", e)
+                return // Exit before deleting the backup if restore fails
+            } finally {
+                db.endTransaction()
+                db.execSQL("DETACH DATABASE backup_db")
+            }
+        }
+        // ONLY delete the backup file if the entire transaction succeeded
+        backupFile.delete()
     }
 
     private fun getIdentityHash(dbFile: File): String? {
@@ -99,11 +159,11 @@ class ManualDatabaseInitializer @Inject constructor(
                     android.util.Log.e(tag, "Summaries asset not found", e)
                     null
                 }
-                
+
                 if (summariesAsset != null) {
                     val summariesJson = summariesAsset.bufferedReader().use { it.readText() }
                     val summariesArray = JSONArray(summariesJson)
-                    
+
                     // Load Section Headers (to join manually since they are small)
                     val sectionsJson = context.assets.open("study/section_headers_v1.json").bufferedReader().use { it.readText() }
                     val sectionsArray = JSONArray(sectionsJson)
@@ -123,7 +183,7 @@ class ManualDatabaseInitializer @Inject constructor(
                             val tEsv = if (obj.isNull("titleEsv")) null else obj.getString("titleEsv")
                             val tStd = if (obj.isNull("titleStandard")) null else obj.getString("titleStandard")
                             val sTitle = sectionsMap[book]
-                            
+
                             db.execSQL(
                                 "INSERT OR REPLACE INTO chapter_summaries (book, chapter, summary1611, titleEsv, titleStandard, sectionTitle) VALUES (?, ?, ?, ?, ?, ?)",
                                 arrayOf<Any?>(book, chapter, s1611, tEsv, tStd, sTitle),
@@ -204,7 +264,7 @@ class ManualDatabaseInitializer @Inject constructor(
                         val ch = v.getInt("chapter")
                         val vs = v.getInt("verse")
                         val text = v.getString("text")
-                        
+
                         stmt.clearBindings()
                         stmt.bindString(1, text)
                         stmt.bindString(2, bookName)
@@ -245,7 +305,7 @@ class ManualDatabaseInitializer @Inject constructor(
                                     }
                                     verseText.append(token)
                                 }
-                                
+
                                 stmt.clearBindings()
                                 stmt.bindString(1, verseText.toString().trim())
                                 stmt.bindString(2, bookName)
@@ -314,7 +374,7 @@ class ManualDatabaseInitializer @Inject constructor(
         val b = "`"
         SQLiteDatabase.openDatabase(dbFile.absolutePath, null, SQLiteDatabase.OPEN_READWRITE).use { db ->
             db.execSQL("PRAGMA foreign_keys=OFF")
-            
+
             // 1. Create missing tables with exact Room order and constraints
             db.execSQL("CREATE TABLE IF NOT EXISTS ${b}marginal_notes$b (${b}id$b INTEGER NOT NULL, ${b}verseId$b INTEGER NOT NULL, ${b}noteType$b TEXT NOT NULL, ${b}note$b TEXT NOT NULL, ${b}anchorToken$b TEXT, ${b}sourceId$b TEXT NOT NULL, ${b}sourceLocator$b TEXT NOT NULL, ${b}checksumSha256$b TEXT NOT NULL, PRIMARY KEY(${b}id$b), FOREIGN KEY(${b}verseId$b) REFERENCES ${b}verses$b(${b}id$b) ON UPDATE NO ACTION ON DELETE CASCADE )")
             db.execSQL("CREATE INDEX IF NOT EXISTS ${b}index_marginal_notes_verseId$b ON ${b}marginal_notes$b (${b}verseId$b)")
@@ -417,7 +477,7 @@ class ManualDatabaseInitializer @Inject constructor(
                         val ch = v.getInt("chapter")
                         val vs = v.getInt("verse")
                         val text = v.getString("text")
-                        
+
                         stmt.clearBindings()
                         stmt.bindString(1, text)
                         stmt.bindString(2, bookName)
@@ -455,7 +515,7 @@ class ManualDatabaseInitializer @Inject constructor(
                             val kDef = entry.optString("kjv_def")
                             val fullDef = if (kDef.isNotEmpty()) "$sDef\n\nKJV: $kDef" else sDef
                             val info = entry.optString("derivation")
-                            
+
                             db.execSQL(
                                 "INSERT OR REPLACE INTO lexicon (strongsId, word, transliteration, pronunciation, definition, info) VALUES (?, ?, ?, ?, ?, ?)",
                                 arrayOf(id, word, translit, pron, fullDef, info)
@@ -478,7 +538,7 @@ class ManualDatabaseInitializer @Inject constructor(
                             val kDef = entry.optString("kjv_def")
                             val fullDef = if (kDef.isNotEmpty()) "$sDef\n\nKJV: $kDef" else sDef
                             val info = entry.optString("derivation")
-                            
+
                             db.execSQL(
                                 "INSERT OR REPLACE INTO lexicon (strongsId, word, transliteration, pronunciation, definition, info) VALUES (?, ?, ?, ?, ?, ?)",
                                 arrayOf(id, word, translit, pron, fullDef, info)
@@ -497,7 +557,7 @@ class ManualDatabaseInitializer @Inject constructor(
                             val id = entry.getString("code")
                             val word = entry.getString("label")
                             val def = entry.getString("description")
-                            
+
                             db.execSQL(
                                 "INSERT OR REPLACE INTO lexicon (strongsId, word, transliteration, pronunciation, definition, info) VALUES (?, ?, ?, ?, ?, ?)",
                                 arrayOf(id, word, "", "", def, "Morphology")
