@@ -1,9 +1,9 @@
 ﻿package com.purewords1611.android.study.data.local
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
-import org.junit.Assert.assertTrue
 
 class DatabaseIdentityHashTest {
 
@@ -11,19 +11,19 @@ class DatabaseIdentityHashTest {
     fun testExpectedIdentityHashMatchesRoomGeneratedHash() {
         val expectedHash = ManualDatabaseInitializer.EXPECTED_IDENTITY_HASH
         
-        val projectDir = System.getProperty("user.dir")
-        val generatedDir = File(projectDir, "build/generated/ksp/debug/kotlin/com/purewords1611/android/study/data/local")
+        // user.dir in gradle unit tests is the module directory (app)
+        val moduleDir = System.getProperty("user.dir")
+        val schemaFile = File(moduleDir, "schemas/com.purewords1611.android.study.data.local.StudyDatabase/52.json")
         
-        val implFile = File(generatedDir, "StudyDatabase_Impl.kt")
-        assertTrue("StudyDatabase_Impl.kt not found at ${implFile.absolutePath}. Ensure project is built.", implFile.exists())
+        assertTrue("Schema 52.json not found at ${schemaFile.absolutePath}. Ensure room.schemaLocation is configured.", schemaFile.exists())
         
-        val content = implFile.readText()
-        val regex = Regex("RoomOpenDelegate\\(\\d+,\\s*\"([a-f0-9]{32})\"")
+        val content = schemaFile.readText()
+        val regex = Regex("\"identityHash\"\\s*:\\s*\"([a-f0-9]{32})\"")
         val match = regex.find(content)
         
-        assertTrue("Could not parse Room identity hash from generated source", match != null)
+        assertTrue("Could not parse Room identityHash from generated schema JSON", match != null)
         val generatedHash = match?.groupValues?.get(1) ?: ""
         
-        assertEquals("ManualDatabaseInitializer hash does not match Room generated hash!", generatedHash, expectedHash)
+        assertEquals("ManualDatabaseInitializer hash does not match Room generated hash!", expectedHash, generatedHash)
     }
 }

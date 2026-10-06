@@ -50,6 +50,10 @@ android {
         jvmTarget = "17"
     }
 
+    ksp {
+        arg("room.schemaLocation", "$projectDir/schemas")
+    }
+
     buildFeatures {
         compose = true
     }

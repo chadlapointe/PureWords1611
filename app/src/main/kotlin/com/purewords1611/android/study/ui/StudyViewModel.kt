@@ -33,8 +33,7 @@ data class StudyUiState(
     val lastReadVerseId: Long? = null,
     val highlightedVerseId: Long? = null,
     val isReadingChapter: Boolean = false,
-    val scrollToVerseId: Long? = null,
-    val scrollToIndex: Int? = null,
+        val pendingScrollTarget: ScrollTarget? = null,
     val importProgress: Float = 1.0f,
     val fontSize: Float = 18f,
     val themeMode: StudyThemeMode = StudyThemeMode.LIGHT,
@@ -102,8 +101,8 @@ class StudyViewModel @Inject constructor(
     private val activeSeekerTrackId = MutableStateFlow<String?>(null)
     private val highlightedVerseId = MutableStateFlow<Long?>(null)
     private val isReadingChapter = MutableStateFlow(value = false)
-    private val scrollToVerseId = MutableStateFlow<Long?>(value = null)
-    private val scrollToIndex = MutableStateFlow<Int?>(value = null)
+    private val pendingScrollTarget = MutableStateFlow<ScrollTarget?>(null)
+    private var scrollTokenCounter = 0L
     private val selectedFrontMatterDocId = MutableStateFlow<String?>(null)
     private val fontSize = MutableStateFlow(18f)
     private val themeMode = MutableStateFlow(StudyThemeMode.LIGHT)
@@ -398,7 +397,7 @@ class StudyViewModel @Inject constructor(
                 selectedVerseDetails,
                 highlightedVerseId,
                 isReadingChapter,
-                scrollToVerseId,
+                pendingScrollTarget,
                 currentDestination,
                 activeSeekerTrackId,
                 selectedFrontMatter,
@@ -445,7 +444,7 @@ class StudyViewModel @Inject constructor(
                     selectedVerseGlossary = (args[12] as Quadruple<List<String>, List<ExplanationEntry>, String, Map<String, String>>).fourth,
                     highlightedVerseId = args[13] as Long?,
                     isReadingChapter = args[14] as Boolean,
-                    scrollToVerseId = args[15] as Long?,
+                    pendingScrollTarget = args[15] as ScrollTarget?,
                     currentDestination = args[16] as RootDestination,
                     activeSeekerTrackId = args[17] as String?,
                     selectedFrontMatter = args[18] as FrontMatterItem?,
@@ -585,20 +584,21 @@ class StudyViewModel @Inject constructor(
             if (ch != null) {
                 val vn = targetVerseNumber ?: 1
                 pagingInitialKey.value = ch.position + (vn - 1).coerceAtLeast(0)
-                scrollToIndex.value = if (vn > 1) 1 else 0
+                // Removed scrollToIndex
                 activeChapter.value = ch
             } else {
                 val vn = targetVerseNumber ?: 1
                 val offset = repository.getChapterOffset(b, c)
                 pagingInitialKey.value = offset + (vn - 1).coerceAtLeast(0)
-                scrollToIndex.value = if (vn > 1) 1 else 0
+                // Removed scrollToIndex
                 activeChapter.value = chapterIndexMap.value["${b}_$c"]
             }
         }
     }
-    fun onScrollToVerseHandled() {
-        scrollToVerseId.value = null
-        scrollToIndex.value = null
+    fun onScrollToVerseHandled(token: Long) {
+        if (pendingScrollTarget.value?.token == token) {
+            pendingScrollTarget.value = null
+        }
     }
     fun updateActivePositionFromScroll(b: String, c: Int, vId: Long?, verseNumber: Int? = null) {
         if ((activeChapter.value?.book != b) || (activeChapter.value?.chapter != c)) {

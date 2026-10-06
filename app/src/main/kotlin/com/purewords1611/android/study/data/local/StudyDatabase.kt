@@ -40,7 +40,7 @@ val MIGRATION_51_52 = object : Migration(51, 52) {
         MarginaliaEntity::class,
     ],
     version = 52,
-    exportSchema = false,
+    exportSchema = true,
 )
 @TypeConverters(StudyTypeConverters::class)
 abstract class StudyDatabase : RoomDatabase() {

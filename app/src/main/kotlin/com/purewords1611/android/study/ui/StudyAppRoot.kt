@@ -847,7 +847,7 @@ private fun ReadScreen(
     onGlossaryClick: (String) -> Unit,
     onWordClick: (String?) -> Unit,
     onChapterSelected: (String, Int) -> Unit,
-    onScrollHandled: () -> Unit,
+    onScrollHandled: (Long) -> Unit,
     onUpdateActivePosition: (String, Int, Long?, Int?) -> Unit,
     onSaveMarginalia: (List<DrawingPath>) -> Unit,
     onToggleVerseSelection: (Long) -> Unit,
@@ -889,26 +889,18 @@ private fun ReadScreen(
         }
     }
 
-    LaunchedEffect(state.scrollToVerseId, state.scrollToIndex, pagingItems.itemCount, pagingItems.loadState.refresh) {
-        state.scrollToIndex?.let { index ->
-            if (pagingItems.itemCount > 0 && index in 0 until pagingItems.itemCount && pagingItems.loadState.refresh is LoadState.NotLoading) {
-                // Wait for data and UI to settle
-                kotlinx.coroutines.delay(100.milliseconds)
-                listState.scrollToItem(index, 0)
-                // Second pass to ensure precision after any mid-frame layout shifts
-                kotlinx.coroutines.delay(50.milliseconds)
-                listState.scrollToItem(index, 0)
-                onScrollHandled()
-            }
-        } ?: state.scrollToVerseId?.let { id ->
-            if (pagingItems.itemCount > 0 && pagingItems.loadState.refresh is LoadState.NotLoading) {
-                for (i in 0 until pagingItems.itemCount) {
-                    val itm = pagingItems[i]
-                    if ((itm is ReaderItem.VerseLine) && (itm.verse.id == id)) {
-                        listState.scrollToItem(i, 0)
-                        onScrollHandled()
-                        break
-                    }
+    LaunchedEffect(state.pendingScrollTarget?.token, pagingItems.loadState.refresh, pagingItems.itemCount) {
+        state.pendingScrollTarget?.let { target ->
+            if (pagingItems.loadState.refresh is LoadState.NotLoading) {
+                val snapshot = pagingItems.itemSnapshotList.items
+                val resolvedIdx = resolveScrollIndex(snapshot, target, false)
+                if (resolvedIdx != null) {
+                    android.util.Log.d("ScrollNav", "resolved idx=$resolvedIdx verseId=${target.verseId} targetPos=${target.absolutePosition}")
+                    listState.scrollToItem(resolvedIdx, 0)
+                    // Optional second pass for header precision
+                    kotlinx.coroutines.delay(50.milliseconds)
+                    listState.scrollToItem(resolvedIdx, 0)
+                    onScrollHandled(target.token)
                 }
             }
         }
@@ -916,7 +908,7 @@ private fun ReadScreen(
 
     LaunchedEffect(listState, pagingItems.loadState.refresh) {
         snapshotFlow { listState.firstVisibleItemIndex }.collect { idx ->
-            if (idx < pagingItems.itemCount && pagingItems.loadState.refresh is LoadState.NotLoading) {
+            if (state.pendingScrollTarget == null && idx < pagingItems.itemCount && pagingItems.loadState.refresh is LoadState.NotLoading) {
                 for (i in idx until (idx + 5).coerceAtMost(pagingItems.itemCount)) {
                     val itm = pagingItems[i]
                     if (itm is ReaderItem.VerseLine) {
@@ -1133,9 +1125,23 @@ private fun ParallelScreen(
 ) {
     val listState = rememberLazyListState()
 
+    LaunchedEffect(state.pendingScrollTarget?.token, pagingItems.loadState.refresh, pagingItems.itemCount) {
+        state.pendingScrollTarget?.let { target ->
+            if (pagingItems.loadState.refresh is LoadState.NotLoading) {
+                val snapshot = pagingItems.itemSnapshotList.items
+                val resolvedIdx = resolveScrollIndex(snapshot, target, false)
+                if (resolvedIdx != null) {
+                    android.util.Log.d("ScrollNav", "Parallel resolved idx=$resolvedIdx verseId=${target.verseId}")
+                    listState.scrollToItem(resolvedIdx, 0)
+                    onUpdateActivePosition("", 0, null, null) // Just a trigger, handled by VM
+                }
+            }
+        }
+    }
+
     LaunchedEffect(listState, pagingItems.loadState.refresh) {
         snapshotFlow { listState.firstVisibleItemIndex }.collect { idx ->
-            if (idx < pagingItems.itemCount && pagingItems.loadState.refresh is LoadState.NotLoading) {
+            if (state.pendingScrollTarget == null && idx < pagingItems.itemCount && pagingItems.loadState.refresh is LoadState.NotLoading) {
                 for (i in idx until (idx + 5).coerceAtMost(pagingItems.itemCount)) {
                     val itm = pagingItems[i]
                     if (itm is ReaderItem.VerseLine) {
