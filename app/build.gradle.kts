@@ -58,6 +58,11 @@ android {
         compose = true
     }
 
+    sourceSets {
+        getByName("androidTest").assets.srcDir("/app/schemas")
+        getByName("test").assets.srcDir("/app/schemas")
+    }
+
     testOptions {
         unitTests {
             isReturnDefaultValues = true
@@ -127,6 +132,10 @@ dependencies {
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
     testImplementation("org.mockito:mockito-inline:5.2.0")
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.1.0")
+    testImplementation("androidx.room:room-testing:2.8.4")
+    testImplementation("androidx.test.ext:junit:1.1.5")
+    testImplementation("androidx.test:core:1.5.0")
+    androidTestImplementation("androidx.room:room-testing:2.8.4")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     androidTestImplementation(platform("androidx.compose:compose-bom:2024.12.01"))
