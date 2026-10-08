@@ -25,14 +25,6 @@ jobs:
           java-version: "17"
           cache: gradle
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3.2.1
-
-      - name: Install Android SDK packages
-        run: |
-          yes | sdkmanager --licenses
-          sdkmanager --install "platform-tools" "platforms;android-34" "build-tools;34.0.0"
-
       - name: Grant Gradle execute permission
         run: chmod +x gradlew
 
@@ -75,13 +67,6 @@ jobs:
           disable-animations: true
           script: ./gradlew :app:connectedDebugAndroidTest --stacktrace
 
-      - name: Upload Test Results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: instrumented-test-results
-          path: app/build/outputs/androidTest-results/
-
   release-build:
     name: Release Build
     if: github.event_name == 'push'
@@ -98,14 +83,6 @@ jobs:
           distribution: temurin
           java-version: "17"
           cache: gradle
-
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3.2.1
-
-      - name: Install Android SDK packages
-        run: |
-          yes | sdkmanager --licenses
-          sdkmanager --install "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
       - name: Grant Gradle execute permission
         run: chmod +x gradlew
