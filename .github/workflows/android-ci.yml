@@ -31,13 +31,6 @@ jobs:
       - name: Run unit tests
         run: ./gradlew testDebugUnitTest --stacktrace
 
-      - name: Upload Test Results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: unit-test-results
-          path: app/build/reports/
-
       - name: Assemble debug app
         run: ./gradlew assembleDebug --stacktrace
 
@@ -74,20 +67,6 @@ jobs:
           disable-animations: true
           script: ./gradlew :app:connectedDebugAndroidTest --stacktrace
 
-      - name: Upload Test Results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: instrumented-test-results
-          path: app/build/outputs/androidTest-results/
-          
-      - name: Upload Test Reports
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: instrumented-test-reports
-          path: app/build/reports/
-
   release-build:
     name: Release Build
     if: github.event_name == 'push'
@@ -109,11 +88,4 @@ jobs:
         run: chmod +x gradlew
 
       - name: Assemble release app
-        run: ./gradlew assembleRelease bundleRelease --stacktrace > build_log.txt 2>&1 || true
-
-      - name: Upload Build Log
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: release-build-log
-          path: build_log.txt
+        run: ./gradlew assembleRelease bundleRelease --stacktrace
