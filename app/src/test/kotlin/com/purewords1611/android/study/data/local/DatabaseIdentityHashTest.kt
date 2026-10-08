@@ -11,9 +11,11 @@ class DatabaseIdentityHashTest {
     fun testExpectedIdentityHashMatchesRoomGeneratedHash() {
         val expectedHash = ManualDatabaseInitializer.EXPECTED_IDENTITY_HASH
         
-        // user.dir in gradle unit tests is the module directory (app)
-        val moduleDir = System.getProperty("user.dir")
-        val schemaFile = File(moduleDir, "schemas/com.purewords1611.android.study.data.local.StudyDatabase/52.json")
+        var baseDir = System.getProperty("user.dir") ?: ""
+        if (!baseDir.endsWith("app")) {
+            baseDir = "$baseDir/app"
+        }
+        val schemaFile = File(baseDir, "schemas/com.purewords1611.android.study.data.local.StudyDatabase/52.json")
         
         assertTrue("Schema 52.json not found at ${schemaFile.absolutePath}. Ensure room.schemaLocation is configured.", schemaFile.exists())
         
