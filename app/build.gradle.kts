@@ -59,8 +59,8 @@ android {
     }
 
     sourceSets {
-        getByName("androidTest").assets.srcDir("/app/schemas")
-        getByName("test").assets.srcDir("/app/schemas")
+        getByName("androidTest").assets.srcDir("$projectDir/schemas")
+        getByName("test").assets.srcDir("$projectDir/schemas")
     }
 
     testOptions {
