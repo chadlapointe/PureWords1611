@@ -1,4 +1,4 @@
-name: Android CI
+﻿name: Android CI
 
 on:
   pull_request:
@@ -50,12 +50,6 @@ jobs:
           java-version: "17"
           cache: gradle
 
-      - name: Enable KVM
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-
       - name: Run instrumented tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -66,6 +60,20 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -camera-front none
           disable-animations: true
           script: ./gradlew :app:connectedDebugAndroidTest --stacktrace
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: instrumented-test-results
+          path: app/build/outputs/androidTest-results/
+          
+      - name: Upload Test Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: instrumented-test-reports
+          path: app/build/reports/
 
   release-build:
     name: Release Build
